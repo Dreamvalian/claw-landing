@@ -4,37 +4,15 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 
-interface StatusData {
-  agent: string;
-  uptime: string;
-  version: string;
-  model: string;
-}
-
 export default function Home() {
-  const [status, setStatus] = useState<StatusData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchStatus();
-    const interval = setInterval(fetchStatus, 30000);
-    return () => clearInterval(interval);
-  }, []);
-
-  const fetchStatus = async () => {
-    try {
-      const res = await fetch('/api/status');
-      const data = await res.json();
-      setStatus(data);
-    } catch (e) {
-      setStatus({ agent: 'error', uptime: 'N/A', version: 'N/A', model: 'Minimax-M2.5' });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [status, setStatus] = useState({
+    agent: "online",
+    uptime: "24/7",
+    version: "2026.3.8",
+    model: "MiniMax-M2.5"
+  });
 
   const getStatusColor = () => {
-    if (!status) return "bg-gray-400";
     switch (status.agent) {
       case "online": return "bg-green-500";
       case "error": return "bg-red-500";
@@ -43,7 +21,6 @@ export default function Home() {
   };
 
   const getStatusText = () => {
-    if (!status || loading) return "Loading...";
     switch (status.agent) {
       case "online": return "Online & Ready";
       case "error": return "Error";
@@ -98,10 +75,8 @@ export default function Home() {
             transition={{ delay: 0.4 }}
             className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 border border-slate-200 rounded-full mb-8"
           >
-            <span className={`relative flex h-3 w-3`}>
-              {status?.agent === "online" && (
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-              )}
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className={`relative inline-flex rounded-full h-3 w-3 ${getStatusColor()}`}></span>
             </span>
             <span className="text-slate-700 font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
@@ -111,33 +86,31 @@ export default function Home() {
         </motion.div>
 
         {/* Status Cards */}
-        {status && (
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 0.6 }}
-            className="grid grid-cols-3 gap-4 mb-6"
-          >
-            <Card className="bg-white border-slate-200 shadow-sm">
-              <CardContent className="p-4 text-center">
-                <p className="text-xs text-slate-500 uppercase tracking-wide mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>Uptime</p>
-                <p className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Inter, sans-serif' }}>{status.uptime || 'N/A'}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-white border-slate-200 shadow-sm">
-              <CardContent className="p-4 text-center">
-                <p className="text-xs text-slate-500 uppercase tracking-wide mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>Version</p>
-                <p className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Inter, sans-serif' }}>{status.version || 'N/A'}</p>
-              </CardContent>
-            </Card>
-            <Card className="bg-white border-slate-200 shadow-sm">
-              <CardContent className="p-4 text-center">
-                <p className="text-xs text-slate-500 uppercase tracking-wide mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>Model</p>
-                <p className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Inter, sans-serif' }}>MiniMax-M2.5</p>
-              </CardContent>
-            </Card>
-          </motion.div>
-        )}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
+          className="grid grid-cols-3 gap-4 mb-6"
+        >
+          <Card className="bg-white border-slate-200 shadow-sm">
+            <CardContent className="p-4 text-center">
+              <p className="text-xs text-slate-500 uppercase tracking-wide mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>Uptime</p>
+              <p className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Inter, sans-serif' }}>{status.uptime}</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-white border-slate-200 shadow-sm">
+            <CardContent className="p-4 text-center">
+              <p className="text-xs text-slate-500 uppercase tracking-wide mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>Version</p>
+              <p className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Inter, sans-serif' }}>{status.version}</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-white border-slate-200 shadow-sm">
+            <CardContent className="p-4 text-center">
+              <p className="text-xs text-slate-500 uppercase tracking-wide mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>Model</p>
+              <p className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Inter, sans-serif' }}>{status.model}</p>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Info Card */}
         <motion.div

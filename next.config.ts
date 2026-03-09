@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
   // Production optimizations
   reactStrictMode: true,
   
+  // Note: rewrites require server-side rendering (not static export)
   // Proxy API requests to backend (fixes HTTPS -> HTTP mixed content)
   async rewrites() {
     return [
@@ -13,6 +14,9 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  
+  // Ensure we don't use static export (breaks rewrites)
+  // Remove 'output: export' if present
 };
 
 export default nextConfig;

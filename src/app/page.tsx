@@ -7,6 +7,7 @@ interface LogEntry {
   timestamp: string;
   level: "info" | "warning" | "error" | "success";
   message: string;
+  source?: string;
 }
 
 interface CronJob {
@@ -18,13 +19,9 @@ interface CronJob {
   nextRun: string;
 }
 
-// Mock data
-const mockLogs: LogEntry[] = [
-  { timestamp: "14:32:15", level: "success", message: "Agent initialized successfully" },
-  { timestamp: "14:30:00", level: "info", message: "Cron job 'Daily Analysis' started" },
-  { timestamp: "14:28:45", level: "warning", message: "High memory usage detected: 78%" },
-  { timestamp: "14:25:12", level: "info", message: "Connected to MiniMax-M2.5 API" },
-  { timestamp: "14:20:00", level: "error", message: "Failed to fetch data - retrying..." },
+// Default mock data for initial render
+const defaultLogs: LogEntry[] = [
+  { timestamp: new Date().toISOString(), level: "info", message: "Waiting for logs from OpenClaw..." },
 ];
 
 const mockCronJobs: CronJob[] = [
@@ -157,6 +154,9 @@ const MCPanel = ({
 export default function Home() {
   const [activeTab, setActiveTab] = useState<"overview" | "logs" | "cronjobs">("overview");
   const [reduceMotion, setReduceMotion] = useState(false);
+  const [logs, setLogs] = useState<LogEntry[]>(defaultLogs);
+  const [logsLoading, setLogsLoading] = useState(true);
+  const [logsError, setLogsError] = useState<string | null>(null);
 
   // Check for reduced motion preference
   useEffect(() => {
@@ -167,11 +167,56 @@ export default function Home() {
     return () => mediaQuery.removeEventListener("change", handler);
   }, []);
 
+  // Fetch logs from API
+  useEffect(() => {
+    const fetchLogs = async () => {
+      try {
+        setLogsLoading(true);
+        const res = await fetch("/api/logs");
+        if (!res.ok) throw new Error("Failed to fetch logs");
+        const data = await res.json();
+        
+        // Parse logs if they're stored as strings
+        const parsedLogs = (data.logs || []).map((log: LogEntry | string) => 
+          typeof log === "string" ? JSON.parse(log) : log
+        );
+        
+        setLogs(parsedLogs.length > 0 ? parsedLogs : defaultLogs);
+      } catch (err) {
+        console.error("Error fetching logs:", err);
+        setLogsError("Failed to load logs");
+        setLogs(defaultLogs);
+      } finally {
+        setLogsLoading(false);
+      }
+    };
+
+    fetchLogs();
+    // Refresh logs every 30 seconds
+    const interval = setInterval(fetchLogs, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   const status = {
     agent: "online",
     uptime: "24/7",
     version: "2026.3.8",
     model: "MiniMax-M2.5",
+  };
+
+  // Format timestamp for display
+  const formatTime = (timestamp: string) => {
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString("en-US", { 
+        hour12: false, 
+        hour: "2-digit", 
+        minute: "2-digit", 
+        second: "2-digit" 
+      });
+    } catch {
+      return timestamp;
+    }
   };
 
   const motionProps = reduceMotion 
@@ -330,19 +375,34 @@ export default function Home() {
               {/* Log counters */}
               <div className="flex gap-2 mb-4 flex-wrap">
                 <span className="px-2 py-1 text-xs font-semibold rounded bg-[#E3F2FD] text-[#1565C0] border border-[#1565C0]">
-                  Info: {mockLogs.filter(l => l.level === "info").length}
+                  Info: {logs.filter(l => l.level === "info").length}
                 </span>
                 <span className="px-2 py-1 text-xs font-semibold rounded bg-[#FFF3E0] text-[#E65100] border border-[#E65100]">
-                  Warnings: {mockLogs.filter(l => l.level === "warning").length}
+                  Warnings: {logs.filter(l => l.level === "warning").length}
                 </span>
                 <span className="px-2 py-1 text-xs font-semibold rounded bg-[#FFEBEE] text-[#C62828] border border-[#C62828]">
-                  Errors: {mockLogs.filter(l => l.level === "error").length}
+                  Errors: {logs.filter(l => l.level === "error").length}
                 </span>
               </div>
 
+              {/* Loading state */}
+              {logsLoading && (
+                <div className="text-center py-4 text-[#555555]">
+                  <span className="inline-block animate-spin mr-2">⏳</span>
+                  Loading logs...
+                </div>
+              )}
+
+              {/* Error state */}
+              {logsError && (
+                <div className="p-3 rounded bg-[#FFEBEE] border border-[#C62828] text-[#C62828] text-sm">
+                  ⚠️ {logsError}
+                </div>
+              )}
+
               {/* Log entries */}
               <ul className="space-y-2" role="list" aria-label="Log entries">
-                {mockLogs.map((log, i) => {
+                {logs.map((log, i) => {
                   const styles = getLogStyles(log.level);
                   return (
                     <li 
@@ -364,7 +424,7 @@ export default function Home() {
                         {log.level[0].toUpperCase()}
                       </span>
                       <time className="text-xs text-[#616161] font-mono min-w-[60px]">
-                        {log.timestamp}
+                        {formatTime(log.timestamp)}
                       </time>
                       <span className="text-sm text-[#333333]">{log.message}</span>
                     </li>

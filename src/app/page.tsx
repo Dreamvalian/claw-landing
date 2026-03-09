@@ -39,7 +39,7 @@ export default function Home() {
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch('http://31.220.83.247:3456/api/status');
+      const res = await fetch('/api/status');
       const data = await res.json();
       setStatus(data);
     } catch (e) {

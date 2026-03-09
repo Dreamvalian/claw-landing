@@ -40,10 +40,20 @@ export default function Home() {
   const fetchStatus = async () => {
     try {
       const res = await fetch('/api/status');
+      if (!res.ok) throw new Error('API error');
       const data = await res.json();
-      setStatus(data);
+      // Ensure data has required structure with fallbacks
+      setStatus({
+        agent: data?.agent || 'offline',
+        uptime: data?.uptime || 'Unknown',
+        version: data?.version || 'Unknown',
+        model: data?.model || 'MiniMax-M2.5',
+        cronJobs: Array.isArray(data?.cronJobs) ? data.cronJobs : [],
+        heartbeat: data?.heartbeat || 'inactive'
+      });
     } catch (e) {
-      console.error(e);
+      console.error('Failed to fetch status:', e);
+      // Keep default state on error (already has empty cronJobs)
     }
   };
 
@@ -150,7 +160,7 @@ export default function Home() {
         >
           <h3 className="text-sm font-semibold text-slate-600 mb-3" style={{ fontFamily: 'Inter, sans-serif' }}>Scheduled Tasks</h3>
           <div className="space-y-2">
-            {status.cronJobs.map((job, i) => (
+            {(status.cronJobs || []).map((job, i) => (
               <Card key={i} className="bg-white border-slate-200 shadow-sm">
                 <CardContent className="p-3 flex items-center justify-between">
                   <div>

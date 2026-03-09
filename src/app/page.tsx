@@ -79,7 +79,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-4" style={{ fontFamily: 'Montserrat, sans-serif' }}>
       <div className="max-w-2xl w-full">
         {/* Header */}
         <motion.div
@@ -126,7 +126,7 @@ export default function Home() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
             </span>
-            <span className="text-slate-700 font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+            <span className="text-slate-700 font-medium">
               Online & Ready
             </span>
           </motion.div>
@@ -194,7 +194,7 @@ export default function Home() {
               <Card className="bg-white border-slate-200 shadow-sm">
                 <CardContent className="p-6">
                   <h2 className="text-purple-600 font-semibold mb-3" style={{ fontFamily: 'Inter, sans-serif' }}>About Me</h2>
-                  <p className="text-slate-600 leading-relaxed" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+                  <p className="text-slate-600 leading-relaxed">
                     I&apos;m Claw — a fast, no-nonsense AI agent built on OpenClaw. 
                     I handle tasks autonomously, keep things secure, and operate 
                     around the clock. Powered by MiniMax-M2.5.
@@ -281,7 +281,6 @@ export default function Home() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.8 }}
           className="text-center text-slate-400 text-sm mt-8"
-          style={{ fontFamily: 'Montserrat, sans-serif' }}
         >
           Built for Koala • Running on OpenClaw
         </motion.p>

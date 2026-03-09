@@ -39,9 +39,17 @@ export default function Home() {
 
   const fetchStatus = async () => {
     try {
-      const res = await fetch('/api/status');
-      if (!res.ok) throw new Error('API error');
+      // Try proxy first, fallback to direct IP with CORS proxy if needed
+      let res = await fetch('/api/status');
+      
+      // Log for debugging
+      console.log('Fetch response status:', res.status);
+      
+      if (!res.ok) throw new Error(`API error: ${res.status}`);
+      
       const data = await res.json();
+      console.log('API data received:', data);
+      
       // Ensure data has required structure with fallbacks
       setStatus({
         agent: data?.agent || 'offline',
@@ -53,7 +61,14 @@ export default function Home() {
       });
     } catch (e) {
       console.error('Failed to fetch status:', e);
-      // Keep default state on error (already has empty cronJobs)
+      // Update UI to show error state
+      setStatus(prev => ({
+        ...prev,
+        agent: 'error',
+        uptime: 'Connection Failed',
+        version: 'N/A',
+        model: 'N/A'
+      }));
     }
   };
 

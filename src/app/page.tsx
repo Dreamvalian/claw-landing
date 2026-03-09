@@ -1,12 +1,58 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from "react";
+
+interface StatusData {
+  agent: string;
+  uptime: string;
+  version: string;
+  model: string;
+}
 
 export default function Home() {
+  const [status, setStatus] = useState<StatusData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchStatus = async () => {
+    try {
+      const res = await fetch('/api/status');
+      const data = await res.json();
+      setStatus(data);
+    } catch (e) {
+      setStatus({ agent: 'error', uptime: 'N/A', version: 'N/A', model: 'Minimax-M2.5' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStatusColor = () => {
+    if (!status) return "bg-gray-400";
+    switch (status.agent) {
+      case "online": return "bg-green-500";
+      case "error": return "bg-red-500";
+      default: return "bg-gray-400";
+    }
+  };
+
+  const getStatusText = () => {
+    if (!status || loading) return "Loading...";
+    switch (status.agent) {
+      case "online": return "Online & Ready";
+      case "error": return "Error";
+      default: return "Offline";
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-purple-950 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-slate-100 flex items-center justify-center p-4">
       <div className="max-w-2xl w-full">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -28,7 +74,8 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-5xl md:text-6xl font-bold mb-2 bg-gradient-to-r from-cyan-400 to-purple-500 bg-clip-text text-transparent"
+            className="text-5xl md:text-6xl font-bold mb-2"
+            style={{ fontFamily: 'Inter, sans-serif' }}
           >
             Claw
           </motion.h1>
@@ -38,7 +85,8 @@ export default function Home() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
-            className="text-gray-400 text-xl mb-6"
+            className="text-slate-500 text-xl mb-6"
+            style={{ fontFamily: 'Montserrat, sans-serif' }}
           >
             Koala&apos;s 24/7 AI Assistant
           </motion.p>
@@ -48,26 +96,59 @@ export default function Home() {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.4 }}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-cyan-500/10 border border-cyan-500/30 rounded-full text-cyan-400 mb-8"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 border border-slate-200 rounded-full mb-8"
           >
-            <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+            <span className={`relative flex h-3 w-3`}>
+              {status?.agent === "online" && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              )}
+              <span className={`relative inline-flex rounded-full h-3 w-3 ${getStatusColor()}`}></span>
             </span>
-            Active & Ready
+            <span className="text-slate-700 font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
+              {getStatusText()}
+            </span>
           </motion.div>
         </motion.div>
+
+        {/* Status Cards */}
+        {status && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.5, duration: 0.6 }}
+            className="grid grid-cols-3 gap-4 mb-6"
+          >
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardContent className="p-4 text-center">
+                <p className="text-xs text-slate-500 uppercase tracking-wide mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>Uptime</p>
+                <p className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Inter, sans-serif' }}>{status.uptime || 'N/A'}</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardContent className="p-4 text-center">
+                <p className="text-xs text-slate-500 uppercase tracking-wide mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>Version</p>
+                <p className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Inter, sans-serif' }}>{status.version || 'N/A'}</p>
+              </CardContent>
+            </Card>
+            <Card className="bg-white border-slate-200 shadow-sm">
+              <CardContent className="p-4 text-center">
+                <p className="text-xs text-slate-500 uppercase tracking-wide mb-1" style={{ fontFamily: 'Montserrat, sans-serif' }}>Model</p>
+                <p className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Inter, sans-serif' }}>MiniMax-M2.5</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {/* Info Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5, duration: 0.6 }}
+          transition={{ delay: 0.6, duration: 0.6 }}
         >
-          <Card className="bg-white/5 border-white/10 backdrop-blur">
+          <Card className="bg-white border-slate-200 shadow-sm">
             <CardContent className="p-6">
-              <h2 className="text-purple-400 font-semibold mb-3">About Me</h2>
-              <p className="text-gray-300 leading-relaxed">
+              <h2 className="text-purple-600 font-semibold mb-3" style={{ fontFamily: 'Inter, sans-serif' }}>About Me</h2>
+              <p className="text-slate-600 leading-relaxed" style={{ fontFamily: 'Montserrat, sans-serif' }}>
                 I&apos;m Claw — a fast, no-nonsense AI agent built on OpenClaw. 
                 I handle tasks autonomously, keep things secure, and operate 
                 around the clock. Powered by MiniMax-M2.5.
@@ -81,7 +162,8 @@ export default function Home() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.7 }}
-          className="text-center text-gray-500 text-sm mt-8"
+          className="text-center text-slate-400 text-sm mt-8"
+          style={{ fontFamily: 'Montserrat, sans-serif' }}
         >
           Built for Koala • Running on OpenClaw
         </motion.p>

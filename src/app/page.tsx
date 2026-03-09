@@ -4,11 +4,21 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 
+interface CronJob {
+  name: string;
+  enabled: boolean;
+  status: string;
+  nextRun: string;
+  lastRun: string;
+}
+
 interface StatusData {
   agent: string;
   uptime: string;
   version: string;
   model: string;
+  cronJobs: CronJob[];
+  heartbeat: string;
 }
 
 export default function Home() {
@@ -16,13 +26,14 @@ export default function Home() {
     agent: "online",
     uptime: "Loading...",
     version: "Loading...",
-    model: "MiniMax-M2.5"
+    model: "MiniMax-M2.5",
+    cronJobs: [],
+    heartbeat: "active"
   });
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchStatus();
-    const interval = setInterval(fetchStatus, 60000); // Update every minute
+    const interval = setInterval(fetchStatus, 60000);
     return () => clearInterval(interval);
   }, []);
 
@@ -32,25 +43,15 @@ export default function Home() {
       const data = await res.json();
       setStatus(data);
     } catch (e) {
-      setStatus(prev => ({ ...prev, uptime: "24/7", version: "2026.3.8" }));
-    } finally {
-      setLoading(false);
+      console.error(e);
     }
   };
 
-  const getStatusColor = () => {
-    switch (status.agent) {
-      case "online": return "bg-green-500";
+  const getStatusColor = (jobStatus: string) => {
+    switch (jobStatus) {
+      case "ok": return "bg-green-500";
       case "error": return "bg-red-500";
       default: return "bg-gray-400";
-    }
-  };
-
-  const getStatusText = () => {
-    switch (status.agent) {
-      case "online": return "Online & Ready";
-      case "error": return "Error";
-      default: return "Offline";
     }
   };
 
@@ -105,10 +106,10 @@ export default function Home() {
               {status.agent === "online" && (
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
               )}
-              <span className={`relative inline-flex rounded-full h-3 w-3 ${getStatusColor()}`}></span>
+              <span className={`relative inline-flex rounded-full h-3 w-3 ${status.agent === 'online' ? 'bg-green-500' : status.agent === 'error' ? 'bg-red-500' : 'bg-gray-400'}`}></span>
             </span>
             <span className="text-slate-700 font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>
-              {getStatusText()}
+              {status.agent === "online" ? "Online & Ready" : status.agent === "error" ? "Error" : "Offline"}
             </span>
           </motion.div>
         </motion.div>
@@ -140,11 +141,39 @@ export default function Home() {
           </Card>
         </motion.div>
 
-        {/* Info Card */}
+        {/* Cron Jobs */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6, duration: 0.6 }}
+          className="mb-6"
+        >
+          <h3 className="text-sm font-semibold text-slate-600 mb-3" style={{ fontFamily: 'Inter, sans-serif' }}>Scheduled Tasks</h3>
+          <div className="space-y-2">
+            {status.cronJobs.map((job, i) => (
+              <Card key={i} className="bg-white border-slate-200 shadow-sm">
+                <CardContent className="p-3 flex items-center justify-between">
+                  <div>
+                    <p className="font-medium text-slate-800" style={{ fontFamily: 'Inter, sans-serif' }}>{job.name}</p>
+                    <p className="text-xs text-slate-500">Next: {job.nextRun}</p>
+                  </div>
+                  <div className="text-right">
+                    <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${job.status === 'ok' ? 'bg-green-100 text-green-700' : job.status === 'error' ? 'bg-red-100 text-red-700' : 'bg-gray-100 text-gray-700'}`}>
+                      <span className={`w-2 h-2 rounded-full ${getStatusColor(job.status)}`}></span>
+                      {job.status}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </motion.div>
+
+        {/* Info Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7, duration: 0.6 }}
         >
           <Card className="bg-white border-slate-200 shadow-sm">
             <CardContent className="p-6">
@@ -162,7 +191,7 @@ export default function Home() {
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
+          transition={{ delay: 0.8 }}
           className="text-center text-slate-400 text-sm mt-8"
           style={{ fontFamily: 'Montserrat, sans-serif' }}
         >

@@ -4,13 +4,39 @@ import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { useState, useEffect } from "react";
 
+interface StatusData {
+  agent: string;
+  uptime: string;
+  version: string;
+  model: string;
+}
+
 export default function Home() {
-  const [status, setStatus] = useState({
+  const [status, setStatus] = useState<StatusData>({
     agent: "online",
-    uptime: "24/7",
-    version: "2026.3.8",
+    uptime: "Loading...",
+    version: "Loading...",
     model: "MiniMax-M2.5"
   });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchStatus();
+    const interval = setInterval(fetchStatus, 60000); // Update every minute
+    return () => clearInterval(interval);
+  }, []);
+
+  const fetchStatus = async () => {
+    try {
+      const res = await fetch('http://31.220.83.247:3456/api/status');
+      const data = await res.json();
+      setStatus(data);
+    } catch (e) {
+      setStatus(prev => ({ ...prev, uptime: "24/7", version: "2026.3.8" }));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getStatusColor = () => {
     switch (status.agent) {
@@ -76,7 +102,9 @@ export default function Home() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 border border-slate-200 rounded-full mb-8"
           >
             <span className="relative flex h-3 w-3">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              {status.agent === "online" && (
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
+              )}
               <span className={`relative inline-flex rounded-full h-3 w-3 ${getStatusColor()}`}></span>
             </span>
             <span className="text-slate-700 font-medium" style={{ fontFamily: 'Montserrat, sans-serif' }}>

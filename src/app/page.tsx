@@ -8,20 +8,7 @@ export default function Home() {
     agent: "online",
     uptime: "24/7",
     version: "2026.3.8",
-    model: "MiniMax-M2.5",
-    cronJobs: [
-      { name: "Daily Football Betting Analysis", status: "ok", nextRun: "Daily 17:00 UTC+7" },
-      { name: "Asian Handicap Betting Analysis", status: "error", nextRun: "Daily 17:00 UTC+7" },
-      { name: "Daily Betting Results", status: "ok", nextRun: "Daily 23:00 UTC+7" }
-    ]
-  };
-
-  const getStatusColor = (jobStatus: string) => {
-    switch (jobStatus) {
-      case "ok": return "bg-green-500";
-      case "error": return "bg-red-500";
-      default: return "bg-gray-400";
-    }
+    model: "MiniMax-M2.5"
   };
 
   return (
@@ -101,31 +88,6 @@ export default function Home() {
               <p className="text-lg font-semibold text-slate-800" style={{ fontFamily: 'Inter, sans-serif' }}>{status.model}</p>
             </CardContent>
           </Card>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.6 }}
-          className="mb-6"
-        >
-          <h3 className="text-sm font-semibold text-slate-600 mb-3" style={{ fontFamily: 'Inter, sans-serif' }}>Scheduled Tasks</h3>
-          <div className="space-y-2">
-            {status.cronJobs.map((job, i) => (
-              <Card key={i} className="bg-white border-slate-200 shadow-sm">
-                <CardContent className="p-3 flex items-center justify-between">
-                  <div>
-                    <p className="font-medium text-slate-800" style={{ fontFamily: 'Inter, sans-serif' }}>{job.name}</p>
-                    <p className="text-xs text-slate-500">Next: {job.nextRun}</p>
-                  </div>
-                  <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs ${job.status === 'ok' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                    <span className={`w-2 h-2 rounded-full ${getStatusColor(job.status)}`}></span>
-                    {job.status}
-                  </span>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
         </motion.div>
 
         <motion.div

@@ -233,8 +233,6 @@ export default function Home() {
       return "";
     }
   };
-    }
-  };
 
   const motionProps = reduceMotion 
     ? {} 

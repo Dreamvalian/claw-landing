@@ -5,9 +5,11 @@ import { useState, useEffect } from "react";
 
 interface LogEntry {
   timestamp: string;
+  date: string;        // YYYY-MM-DD format
   level: "info" | "warning" | "error" | "success";
   message: string;
   source?: string;
+  description?: string; // Extra detail for errors/warnings
 }
 
 interface CronJob {
@@ -219,6 +221,21 @@ export default function Home() {
     }
   };
 
+  const formatDate = (timestamp: string) => {
+    try {
+      const date = new Date(timestamp);
+      return date.toLocaleDateString("en-US", { 
+        year: "numeric", 
+        month: "2-digit", 
+        day: "2-digit" 
+      });
+    } catch {
+      return "";
+    }
+  };
+    }
+  };
+
   const motionProps = reduceMotion 
     ? {} 
     : { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 } };
@@ -407,26 +424,41 @@ export default function Home() {
                   return (
                     <li 
                       key={i} 
-                      className="flex items-center gap-3 p-3 rounded border-2"
+                      className={`p-3 rounded border-2 ${log.level === 'error' || log.level === 'warning' ? 'pb-4' : ''}`}
                       style={{
                         backgroundColor: styles.bg,
                         borderColor: styles.border,
                       }}
                     >
-                      <span 
-                        className="px-2 py-0.5 text-xs font-bold uppercase rounded"
-                        style={{ 
-                          backgroundColor: styles.color, 
-                          color: "white" 
-                        }}
-                        aria-label={`Level: ${log.level}`}
-                      >
-                        {log.level[0].toUpperCase()}
-                      </span>
-                      <time className="text-xs text-[#616161] font-mono min-w-[60px]">
-                        {formatTime(log.timestamp)}
-                      </time>
-                      <span className="text-sm text-[#333333]">{log.message}</span>
+                      <div className="flex items-center gap-3">
+                        <span 
+                          className="px-2 py-0.5 text-xs font-bold uppercase rounded"
+                          style={{ 
+                            backgroundColor: styles.color, 
+                            color: "white" 
+                          }}
+                          aria-label={`Level: ${log.level}`}
+                        >
+                          {log.level[0].toUpperCase()}
+                        </span>
+                        <time className="text-xs text-[#616161] font-mono min-w-[70px]">
+                          {formatDate(log.timestamp)} {formatTime(log.timestamp)}
+                        </time>
+                        <span className="text-sm text-[#333333]">{log.message}</span>
+                      </div>
+                      {/* Extra description for errors and warnings */}
+                      {(log.level === 'error' || log.level === 'warning') && log.description && (
+                        <div 
+                          className="mt-2 p-2 text-xs rounded"
+                          style={{
+                            backgroundColor: log.level === 'error' ? '#FFEBEE' : '#FFF8E1',
+                            border: `1px dashed ${log.level === 'error' ? '#F44336' : '#FFC107'}`,
+                          }}
+                        >
+                          <span className="font-bold" style={{ color: '#F44336' }}>➜ </span>
+                          <span style={{ color: '#5D4037' }}>{log.description}</span>
+                        </div>
+                      )}
                     </li>
                   );
                 })}

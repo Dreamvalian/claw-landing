@@ -23,7 +23,7 @@ interface CronJob {
 
 // Default mock data for initial render
 const defaultLogs: LogEntry[] = [
-  { timestamp: new Date().toISOString(), level: "info", message: "Waiting for logs from OpenClaw..." },
+  { timestamp: new Date().toISOString(), date: new Date().toISOString().split('T')[0], level: "info", message: "Waiting for logs from OpenClaw..." },
 ];
 
 const mockCronJobs: CronJob[] = [

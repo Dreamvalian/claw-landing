@@ -326,7 +326,6 @@ export default function Home() {
           {[
             { id: "overview", label: "Overview", icon: "📦" },
             { id: "logs", label: "System Logs", icon: "📜" },
-            { id: "cronjobs", label: "Cron Jobs", icon: "⚙️" },
           ].map((tab) => (
             <MCButton
               key={tab.id}
@@ -464,59 +463,7 @@ export default function Home() {
             </MCPanel>
           )}
 
-          {/* Cron Jobs Tab */}
-          {activeTab === "cronjobs" && (
-            <MCPanel title="Cron Jobs" ariaLabel="Cron jobs panel">
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm text-[#555555]">
-                  <strong>{mockCronJobs.filter(j => j.status === "active" || j.status === "running").length}</strong> Active Jobs
-                </span>
-              </div>
-
-              <ul className="space-y-3" role="list" aria-label="Cron job list">
-                {mockCronJobs.map((job) => {
-                  const styles = getJobStyles(job.status);
-                  return (
-                    <li 
-                      key={job.id} 
-                      className="p-3 rounded border-2"
-                      style={{
-                        backgroundColor: "white",
-                        borderColor: mcColors.stoneDark,
-                        boxShadow: `inset -2px -2px 0 ${mcColors.borderOuter}, inset 2px 2px 0 ${mcColors.borderInner}`,
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span 
-                            className="w-3 h-3 rounded-full border border-black"
-                            style={{ backgroundColor: styles.dot }}
-                            aria-hidden="true"
-                          />
-                          <h3 className="font-bold text-[#333333] text-sm">{job.name}</h3>
-                        </div>
-                        <span 
-                          className="px-2 py-0.5 text-xs font-bold uppercase rounded"
-                          style={{
-                            backgroundColor: styles.bg,
-                            color: styles.color,
-                            border: `1px solid ${styles.color}`,
-                          }}
-                        >
-                          {job.status}
-                        </span>
-                      </div>
-                      <div className="flex gap-4 text-xs text-[#555555] flex-wrap">
-                        <span className="font-mono bg-[#F5F5F5] px-2 py-0.5 rounded">{job.schedule}</span>
-                        <span>Next: <strong>{job.nextRun}</strong></span>
-                        <span>Last: {job.lastRun}</span>
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            </MCPanel>
-          )}
+          {/* End of tabs */}
         </div>
 
         {/* Footer */}

@@ -224,7 +224,7 @@ export default function Home() {
     : { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 } };
 
   return (
-    <main 
+    <main
       className="min-h-screen w-full flex items-center justify-center p-4"
       style={{
         fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",

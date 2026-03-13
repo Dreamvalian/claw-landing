@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { readFileSync } from 'fs';
 import { execSync } from 'child_process';
 import { existsSync } from 'fs';
 
@@ -25,62 +24,74 @@ function getCronJobs(): CronJob[] {
     crontab = '';
   }
   
-  // Parse crontab and map to job info
-  const jobConfigs = [
-    { name: 'Heartbeat', script: 'heartbeat.sh', schedule: '*/30 * * * *' },
-    { name: 'Cron Health', script: 'cron-health.sh', schedule: '15 */2 * * *' },
-    { name: 'Morning Briefing', script: 'morning-briefing.sh', schedule: '0 2 * * *' },
-    { name: 'Evening Review', script: 'evening-review.sh', schedule: '0 13 * * *' },
-    { name: 'Security Audit', script: 'security-audit.sh', schedule: '0 6 * * *' },
-    { name: 'Backup', script: 'backup-github.sh', schedule: '0 */6 * * *' },
-    { name: 'Hyperspace Check', script: 'hyperspace-check.sh', schedule: '0 */12 * * *' },
-    { name: 'UX Digest', script: 'ux-digest.sh', schedule: '0 16 * * *' },
-    { name: 'Session Log', script: 'session-log.sh', schedule: '30 6 * * *' },
-    { name: 'UI/UX Research', script: 'uiux-research-alarm.sh', schedule: '0 13 * * *' },
-  ];
+  // Map script names to friendly names
+  const nameMap: Record<string, string> = {
+    'heartbeat.sh': 'Heartbeat',
+    'cron-health.sh': 'Cron Health',
+    'morning-briefing.sh': 'Morning Briefing',
+    'evening-review.sh': 'Evening Review',
+    'security-audit.sh': 'Security Audit',
+    'backup-github.sh': 'Backup',
+    'hyperspace-check.sh': 'Hyperspace Check',
+    'ux-digest.sh': 'UX Digest',
+    'session-log.sh': 'Session Log',
+    'redis-log-summary.sh': 'Redis Log Summary',
+  };
   
-  for (const config of jobConfigs) {
-    const logFile = `/root/.openclaw/logs/${config.script.replace('.sh', '')}.log`;
+  // Parse crontab lines
+  const lines = crontab.split('\n').filter(line => 
+    line.trim() && !line.startsWith('#') && !line.startsWith('CRON') && !line.startsWith('TZ=')
+  );
+  
+  for (const line of lines) {
+    const parts = line.trim().split(/\s+/);
+    if (parts.length < 6) continue;
+    
+    const schedule = parts.slice(0, 5).join(' ');
+    const scriptMatch = line.match(/\/([^/]+\.sh)/);
+    if (!scriptMatch) continue;
+    
+    const script = scriptMatch[1];
+    const name = nameMap[script] || script.replace('.sh', '');
+    
+    // Get log file for last run
+    const logFile = `/root/.openclaw/logs/${script.replace('.sh', '')}.log`;
     let lastRun: string | null = null;
     let status = 'idle';
     
     if (existsSync(logFile)) {
       try {
-        const content = readFileSync(logFile, 'utf8');
+        const fs = require('fs');
+        const content = fs.readFileSync(logFile, 'utf8');
+        const fileStat = fs.statSync(logFile);
+        const now = new Date();
+        const diffMs = now.getTime() - fileStat.mtime.getTime();
+        const diffMinutes = diffMs / (1000 * 60);
+        
+        if (diffMinutes < 5) {
+          status = 'running';
+        }
+        
         const lines = content.trim().split('\n');
         if (lines.length > 0) {
-          // Get last line timestamp
           const lastLine = lines[lines.length - 1];
           const match = lastLine.match(/(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})/);
           if (match) {
             lastRun = match[1];
-            // Check if recently modified (within 2x schedule)
-            const fileStat = require('fs').statSync(logFile);
-            const now = new Date();
-            const fileMtime = new Date(fileStat.mtime);
-            const diffMs = now.getTime() - fileMtime.getTime();
-            const diffMinutes = diffMs / (1000 * 60);
-            
-            // Consider "running" if log was modified in last 5 minutes
-            if (diffMinutes < 5) {
-              status = 'running';
-            } else {
-              status = 'idle';
-            }
           }
         }
       } catch {
-        // Ignore read errors
+        // Ignore
       }
     }
     
-    // Calculate next run (simplified)
-    const nextRun = calculateNextRun(config.schedule);
+    // Calculate next run
+    const nextRun = calculateNextRun(schedule);
     
     jobs.push({
-      name: config.name,
-      schedule: config.schedule,
-      script: config.script,
+      name,
+      schedule,
+      script,
       lastRun,
       nextRun,
       status,
@@ -103,18 +114,35 @@ function calculateNextRun(schedule: string): string {
     nextDate.setSeconds(0);
     nextDate.setMilliseconds(0);
     
-    // Simple next run calculation
-    if (minute === '*/30') {
-      nextDate.setMinutes(now.getMinutes() < 30 ? 30 : 60);
-    } else if (minute.startsWith('*/')) {
+    // Handle intervals
+    if (minute.startsWith('*/')) {
       const interval = parseInt(minute.replace('*/', ''));
-      nextDate.setMinutes(Math.ceil(now.getMinutes() / interval) * interval);
+      const currentMinute = nextDate.getMinutes();
+      const nextMinute = Math.ceil(currentMinute / interval) * interval;
+      nextDate.setMinutes(nextMinute);
+      if (nextMinute <= currentMinute) {
+        nextDate.setHours(nextDate.getHours() + 1);
+      }
+    } else if (minute === '*') {
+      nextDate.setMinutes(0);
+      nextDate.setHours(nextDate.getHours() + 1);
     } else {
       nextDate.setMinutes(parseInt(minute));
+      if (nextDate <= now) {
+        nextDate.setHours(nextDate.getHours() + 1);
+      }
     }
     
-    if (nextDate <= now) {
-      nextDate.setHours(nextDate.getHours() + 1);
+    // Handle hour intervals
+    if (hour.startsWith('*/')) {
+      const interval = parseInt(hour.replace('*/', ''));
+      const currentHour = nextDate.getHours();
+      const nextHour = Math.ceil(currentHour / interval) * interval;
+      nextDate.setHours(nextHour);
+      if (nextHour <= currentHour) {
+        nextDate.setDate(nextDate.getDate() + 1);
+      }
+      nextDate.setMinutes(0);
     }
     
     return nextDate.toISOString().replace('T', ' ').substring(0, 16);
@@ -135,7 +163,6 @@ export async function GET() {
     };
     
     try {
-      // Check gateway
       const gatewayCheck = execSync('pgrep -f "openclaw.*gateway" | head -1', { encoding: 'utf8' }).trim();
       systemStatus.gateway = gatewayCheck ? 'running' : 'stopped';
     } catch {
@@ -143,7 +170,6 @@ export async function GET() {
     }
     
     try {
-      // Check hyperspace
       const hyperspaceCheck = execSync('hyperspace status 2>/dev/null | grep Status: | awk \'{print $2}\'', { encoding: 'utf8' }).trim();
       systemStatus.hyperspace = hyperspaceCheck || 'stopped';
     } catch {
@@ -151,7 +177,6 @@ export async function GET() {
     }
     
     try {
-      // Check disk
       const diskCheck = execSync('df / | tail -1 | awk \'{print $5}\'', { encoding: 'utf8' }).trim();
       systemStatus.disk = diskCheck;
     } catch {

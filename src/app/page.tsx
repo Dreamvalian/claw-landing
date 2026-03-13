@@ -17,7 +17,7 @@ import {
   RefreshCw,
   Menu,
   X,
-  Home,
+  Home as HomeIcon,
   Bot
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -194,7 +194,7 @@ export default function Home() {
 
           {/* Navigation */}
           <nav className="space-y-2">
-            <NavItem view="dashboard" icon={Home} label="Dashboard" />
+            <NavItem view="dashboard" icon={HomeIcon} label="Dashboard" />
             <NavItem view="logs" icon={Terminal} label="System Logs" />
             <NavItem view="cronjobs" icon={Calendar} label="Cron Jobs" />
           </nav>

@@ -1,15 +1,17 @@
 "use client";
 
 import { motion } from "framer-motion";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Activity, FileText, Clock, Terminal, AlertCircle, CheckCircle, Info } from "lucide-react";
 import { useState, useEffect } from "react";
 
 interface LogEntry {
   timestamp: string;
-  date: string;        // YYYY-MM-DD format
   level: "info" | "warning" | "error" | "success";
   message: string;
   source?: string;
-  description?: string; // Extra detail for errors/warnings
 }
 
 interface CronJob {
@@ -21,9 +23,8 @@ interface CronJob {
   nextRun: string;
 }
 
-// Default mock data for initial render
 const defaultLogs: LogEntry[] = [
-  { timestamp: new Date().toISOString(), date: new Date().toISOString().split('T')[0], level: "info", message: "Waiting for logs from OpenClaw..." },
+  { timestamp: new Date().toISOString(), level: "info", message: "Waiting for logs from OpenClaw..." },
 ];
 
 const mockCronJobs: CronJob[] = [
@@ -32,135 +33,42 @@ const mockCronJobs: CronJob[] = [
   { id: "3", name: "Results Collector", schedule: "0 23 * * *", status: "active", lastRun: "23:00", nextRun: "23:00" },
 ];
 
-// WCAG 2.1 Compliant Color Palette (AA/AAA compliant contrasts)
-const mcColors = {
-  // Primary colors with sufficient contrast
-  grassTop: "#5D8C47",      // Green for active states (4.5:1 on white)
-  grassDark: "#4A7038",     // Darker green for hover
-  dirt: "#8B6914",          // Brown for secondary
-  dirtDark: "#6B4E0A",      // Dark brown for text
-  stone: "#7D7D7D",         // Gray for neutral
-  stoneDark: "#555555",     // Dark gray for borders
-  stoneLight: "#C6C6C6",    // Light gray for backgrounds
-  
-  // Status colors (WCAG compliant)
-  success: "#2E7D32",       // Green (4.6:1 on white)
-  warning: "#E65100",       // Orange (4.5:1 on white)
-  error: "#C62828",         // Red (7:1 on white)
-  info: "#1565C0",          // Blue (7:1 on white)
-  
-  // Minecraft accent colors
-  gold: "#B8860B",          // Gold text
-  diamond: "#00AAAA",       // Diamond cyan
-  obsidian: "#2C2C2C",      // Dark background
-  
-  // UI colors
-  bgPrimary: "#C6C6C6",     // Light gray background
-  bgDark: "#8B8B8B",        // Darker gray
-  borderOuter: "#373737",   // Dark border (inset)
-  borderInner: "#FFFFFF",   // Light border (outset)
-};
-
-// Get log level styles
-const getLogStyles = (level: string) => {
+const getLogIcon = (level: string) => {
   switch (level) {
-    case "info": return { bg: "#E3F2FD", color: "#1565C0", border: "#1565C0" };
-    case "warning": return { bg: "#FFF3E0", color: "#E65100", border: "#E65100" };
-    case "error": return { bg: "#FFEBEE", color: "#C62828", border: "#C62828" };
-    case "success": return { bg: "#E8F5E9", color: "#2E7D32", border: "#2E7D32" };
-    default: return { bg: "#F5F5F5", color: "#616161", border: "#616161" };
+    case "info": return <Info className="w-4 h-4 text-blue-500" />;
+    case "warning": return <AlertCircle className="w-4 h-4 text-amber-500" />;
+    case "error": return <AlertCircle className="w-4 h-4 text-red-500" />;
+    case "success": return <CheckCircle className="w-4 h-4 text-green-500" />;
+    default: return <Info className="w-4 h-4 text-gray-500" />;
   }
 };
 
-// Get job status styles
-const getJobStyles = (status: string) => {
+const getLogBadge = (level: string) => {
+  switch (level) {
+    case "info": return <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100">Info</Badge>;
+    case "warning": return <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100">Warning</Badge>;
+    case "error": return <Badge variant="destructive">Error</Badge>;
+    case "success": return <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100">Success</Badge>;
+    default: return <Badge variant="outline">Unknown</Badge>;
+  }
+};
+
+const getJobStatusBadge = (status: string) => {
   switch (status) {
-    case "active": return { dot: mcColors.success, bg: "#E8F5E9", color: mcColors.success };
-    case "running": return { dot: mcColors.diamond, bg: "#E0F7FA", color: "#00838F" };
-    case "paused": return { bg: "#F5F5F5", color: "#616161", dot: "#9E9E9E" };
-    case "error": return { bg: "#FFEBEE", color: mcColors.error, dot: mcColors.error };
-    default: return { bg: "#F5F5F5", color: "#616161", dot: "#9E9E9E" };
+    case "active": return <Badge variant="secondary" className="bg-green-100 text-green-700">Active</Badge>;
+    case "running": return <Badge className="bg-blue-500">Running</Badge>;
+    case "paused": return <Badge variant="outline">Paused</Badge>;
+    case "error": return <Badge variant="destructive">Error</Badge>;
+    default: return <Badge variant="outline">Unknown</Badge>;
   }
 };
-
-// Minecraft Button Component with accessibility
-const MCButton = ({ 
-  children, 
-  onClick, 
-  active = false, 
-  ariaLabel,
-  ariaSelected
-}: { 
-  children: React.ReactNode; 
-  onClick?: () => void; 
-  active?: boolean;
-  ariaLabel?: string;
-  ariaSelected?: boolean;
-}) => (
-  <button
-    onClick={onClick}
-    aria-label={ariaLabel}
-    aria-selected={ariaSelected}
-    role="tab"
-    className={`px-4 py-2 font-semibold text-sm transition-all duration-150 rounded-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[${mcColors.gold}] ${
-      active 
-        ? "text-white" 
-        : "text-[#3F3F3F] hover:text-black"
-    }`}
-    style={{
-      fontFamily: "system-ui, -apple-system, sans-serif",
-      backgroundColor: active ? mcColors.grassTop : mcColors.stoneLight,
-      border: `2px solid ${active ? mcColors.grassDark : mcColors.stoneDark}`,
-      boxShadow: active 
-        ? `inset 2px 2px 4px rgba(0,0,0,0.3)`
-        : `inset -2px -2px 0 ${mcColors.borderOuter}, inset 2px 2px 0 ${mcColors.borderInner}`,
-      minHeight: "44px", // WCAG 2.5.5 target size
-    }}
-  >
-    {children}
-  </button>
-);
-
-// Panel container with Minecraft styling
-const MCPanel = ({ 
-  children, 
-  className = "", 
-  title,
-  ariaLabel
-}: { 
-  children: React.ReactNode; 
-  className?: string;
-  title?: string;
-  ariaLabel?: string;
-}) => (
-  <section 
-    className={`bg-[${mcColors.stoneLight}] border-2 border-[${mcColors.stoneDark}] ${className}`}
-    aria-label={ariaLabel || title}
-    style={{
-      boxShadow: `inset -3px -3px 0 ${mcColors.borderOuter}, inset 3px 3px 0 ${mcColors.borderInner}`,
-    }}
-  >
-    {title && (
-      <header className="px-4 py-2 border-b-2 border-[#555555] bg-[#B8B8B8]">
-        <h2 className="font-bold text-[#3F3F3F]" style={{ fontFamily: "system-ui, sans-serif" }}>
-          {title}
-        </h2>
-      </header>
-    )}
-    <div className="p-4">
-      {children}
-    </div>
-  </section>
-);
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<"overview" | "logs" | "cronjobs">("overview");
-  const [reduceMotion, setReduceMotion] = useState(false);
   const [logs, setLogs] = useState<LogEntry[]>(defaultLogs);
   const [logsLoading, setLogsLoading] = useState(true);
   const [logsError, setLogsError] = useState<string | null>(null);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
-  // Check for reduced motion preference
   useEffect(() => {
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
     setReduceMotion(mediaQuery.matches);
@@ -169,7 +77,6 @@ export default function Home() {
     return () => mediaQuery.removeEventListener("change", handler);
   }, []);
 
-  // Fetch logs from API
   useEffect(() => {
     const fetchLogs = async () => {
       try {
@@ -177,12 +84,9 @@ export default function Home() {
         const res = await fetch("/api/logs");
         if (!res.ok) throw new Error("Failed to fetch logs");
         const data = await res.json();
-        
-        // Parse logs if they're stored as strings
         const parsedLogs = (data.logs || []).map((log: LogEntry | string) => 
           typeof log === "string" ? JSON.parse(log) : log
         );
-        
         setLogs(parsedLogs.length > 0 ? parsedLogs : defaultLogs);
       } catch (err) {
         console.error("Error fetching logs:", err);
@@ -194,7 +98,6 @@ export default function Home() {
     };
 
     fetchLogs();
-    // Refresh logs every 30 seconds
     const interval = setInterval(fetchLogs, 30000);
     return () => clearInterval(interval);
   }, []);
@@ -206,7 +109,6 @@ export default function Home() {
     model: "MiniMax-M2.5",
   };
 
-  // Format timestamp for display
   const formatTime = (timestamp: string) => {
     try {
       const date = new Date(timestamp);
@@ -221,260 +123,209 @@ export default function Home() {
     }
   };
 
-  const formatDate = (timestamp: string) => {
-    try {
-      const date = new Date(timestamp);
-      return date.toLocaleDateString("en-US", { 
-        year: "numeric", 
-        month: "2-digit", 
-        day: "2-digit" 
-      });
-    } catch {
-      return "";
-    }
-  };
-
-  const motionProps = reduceMotion 
+  const fadeIn = reduceMotion 
     ? {} 
-    : { initial: { opacity: 0, y: 10 }, animate: { opacity: 1, y: 0 } };
+    : { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5 } };
 
   return (
-    <main
-      className="min-h-screen w-full flex items-center justify-center p-4"
-      style={{
-        fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-        background: `linear-gradient(180deg, #87CEEB 0%, #87CEEB 35%, ${mcColors.grassTop} 35%, ${mcColors.dirt} 70%, ${mcColors.dirtDark} 100%)`,
-      }}
-    >
-      {/* Skip to content link for accessibility */}
-      <a 
-        href="#content" 
-        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 bg-white text-black px-4 py-2 rounded z-50"
-      >
-        Skip to main content
-      </a>
-
-      <div 
-        id="content"
-        className="w-full max-w-3xl flex flex-col"
-        style={{
-          backgroundColor: mcColors.stoneLight,
-          border: `4px solid ${mcColors.stoneDark}`,
-          boxShadow: `
-            inset -4px -4px 0 ${mcColors.borderOuter},
-            inset 4px 4px 0 ${mcColors.borderInner},
-            8px 8px 20px rgba(0,0,0,0.4)
-          `,
-        }}
-      >
+    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4 md:p-8">
+      <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
-        <header className="text-center p-6 border-b-4 border-[#555555]">
-          <div 
-            className={`text-6xl mb-2 mx-auto w-20 h-20 flex items-center justify-center ${reduceMotion ? '' : 'animate-bounce'}`}
-            style={{ animationDuration: "2s" }}
-            role="img" 
-            aria-label="Claw mascot otter"
-          >
-            🦦
-          </div>
-
-          <h1 
-            className="text-4xl md:text-5xl font-bold mb-2"
-            style={{ 
-              color: mcColors.gold,
-              textShadow: `3px 3px 0 ${mcColors.dirtDark}`,
-              fontFamily: "Georgia, 'Times New Roman', serif",
-              letterSpacing: "0.05em",
-            }}
-          >
-            CLAW
-          </h1>
-
-          <p className="text-lg text-[#3F3F3F] mb-4 font-medium">
-            Koala&apos;s 24/7 AI Assistant
-          </p>
-
-          {/* Status indicator */}
-          <div 
-            className="inline-flex items-center gap-2 px-4 py-2 rounded"
-            style={{
-              backgroundColor: mcColors.stoneDark,
-              border: `2px solid ${mcColors.borderOuter}`,
-            }}
-          >
-            <span 
-              className="relative flex h-3 w-3"
-              aria-hidden="true"
-            >
-              <span 
-                className={`absolute inline-flex h-full w-full rounded-full bg-green-400 ${reduceMotion ? '' : 'animate-ping'}`}
-                style={{ opacity: reduceMotion ? 0.75 : undefined }}
-              />
-              <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500 border border-green-700" />
-            </span>
-            <span className="text-white font-semibold text-sm">ONLINE</span>
-          </div>
-        </header>
-
-        {/* Tab Navigation */}
-        <nav 
-          className="flex justify-center gap-2 p-4 border-b-2 border-[#555555]"
-          style={{ backgroundColor: mcColors.stone }}
-          role="tablist"
-          aria-label="Dashboard tabs"
+        <motion.div 
+          className="text-center space-y-4"
+          {...fadeIn}
         >
-          {[
-            { id: "overview", label: "Overview", icon: "📦" },
-            { id: "logs", label: "System Logs", icon: "📜" },
-          ].map((tab) => (
-            <MCButton
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as typeof activeTab)}
-              active={activeTab === tab.id}
-              ariaLabel={`${tab.label} tab`}
-              ariaSelected={activeTab === tab.id}
-            >
-              <span aria-hidden="true" className="mr-2">{tab.icon}</span>
-              {tab.label}
-            </MCButton>
-          ))}
-        </nav>
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl shadow-lg">
+            <span className="text-4xl">🦦</span>
+          </div>
+          
+          <div>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
+              Claw
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">
+              Koala&apos;s 24/7 AI Assistant
+            </p>
+          </div>
 
-        {/* Tab Content */}
-        <div className="p-4" role="tabpanel">
-          {/* Overview Tab */}
-          {activeTab === "overview" && (
-            <div className="space-y-4" role="region" aria-label="Overview">
-              {/* Status Cards Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {[
-                  { label: "Uptime", value: status.uptime, color: mcColors.success },
-                  { label: "Version", value: status.version, color: mcColors.info },
-                  { label: "Model", value: status.model, color: mcColors.gold },
-                ].map((item, i) => (
-                  <MCPanel key={i} ariaLabel={`${item.label}: ${item.value}`}>
-                    <div className="text-center py-2">
-                      <p className="text-xs font-bold text-[#555555] uppercase tracking-wide mb-1">
-                        {item.label}
-                      </p>
-                      <p 
-                        className="text-lg font-bold"
-                        style={{ color: item.color }}
-                      >
-                        {item.value}
-                      </p>
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full font-medium">
+            <span className="relative flex h-2 w-2">
+              <span className={`absolute inline-flex h-full w-full rounded-full bg-green-400 ${reduceMotion ? '' : 'animate-ping'}`} />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+            </span>
+            Online & Ready
+          </div>
+        </motion.div>
+
+        {/* Status Cards */}
+        <motion.div 
+          className="grid grid-cols-1 md:grid-cols-3 gap-4"
+          {...fadeIn}
+          transition={{ delay: 0.1 }}
+        >
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-600">Uptime</CardTitle>
+              <Activity className="h-4 w-4 text-slate-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{status.uptime}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-600">Version</CardTitle>
+              <FileText className="h-4 w-4 text-slate-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{status.version}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-slate-600">Model</CardTitle>
+              <Terminal className="h-4 w-4 text-slate-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{status.model}</div>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        {/* Main Content Tabs */}
+        <motion.div {...fadeIn} transition={{ delay: 0.2 }}>
+          <Tabs defaultValue="overview" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="overview">Overview</TabsTrigger>
+              <TabsTrigger value="logs">System Logs</TabsTrigger>
+              <TabsTrigger value="cronjobs">Cron Jobs</TabsTrigger>
+            </TabsList>
+
+            {/* Overview Tab */}
+            <TabsContent value="overview" className="space-y-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle>About Claw</CardTitle>
+                </CardHeader>
+                <CardContent className="prose prose-slate dark:prose-invert max-w-none">
+                  <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                    I&apos;m <strong>Claw</strong> — a fast, no-nonsense AI agent built on OpenClaw. 
+                    I handle tasks autonomously, keep things secure, and operate 
+                    around the clock. Powered by <span className="text-purple-600 font-medium">MiniMax-M2.5</span>.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Logs Tab */}
+            <TabsContent value="logs">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Terminal className="w-5 h-5" />
+                    System Logs
+                  </CardTitle>
+                  <div className="flex gap-2 text-sm">
+                    <span className="text-slate-500">
+                      Info: {logs.filter(l => l.level === "info").length}
+                    </span>
+                    <span className="text-slate-500">
+                      Warnings: {logs.filter(l => l.level === "warning").length}
+                    </span>
+                    <span className="text-slate-500">
+                      Errors: {logs.filter(l => l.level === "error").length}
+                    </span>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  {logsLoading && (
+                    <div className="text-center py-8 text-slate-500">
+                      Loading logs...
                     </div>
-                  </MCPanel>
-                ))}
-              </div>
-
-              {/* About Panel */}
-              <MCPanel title="About Claw" ariaLabel="About section">
-                <p className="text-[#3F3F3F] leading-relaxed">
-                  I&apos;m <strong>Claw</strong> — a fast, no-nonsense AI agent built on OpenClaw. 
-                  I handle tasks autonomously, keep things secure, and operate 
-                  around the clock. Powered by <span style={{ color: mcColors.gold }}>MiniMax-M2.5</span>.
-                </p>
-              </MCPanel>
-            </div>
-          )}
-
-          {/* System Logs Tab */}
-          {activeTab === "logs" && (
-            <MCPanel 
-              title="System Logs" 
-              className="max-h-[400px] overflow-auto"
-              ariaLabel="System logs panel"
-            >
-              {/* Log counters */}
-              <div className="flex gap-2 mb-4 flex-wrap">
-                <span className="px-2 py-1 text-xs font-semibold rounded bg-[#E3F2FD] text-[#1565C0] border border-[#1565C0]">
-                  Info: {logs.filter(l => l.level === "info").length}
-                </span>
-                <span className="px-2 py-1 text-xs font-semibold rounded bg-[#FFF3E0] text-[#E65100] border border-[#E65100]">
-                  Warnings: {logs.filter(l => l.level === "warning").length}
-                </span>
-                <span className="px-2 py-1 text-xs font-semibold rounded bg-[#FFEBEE] text-[#C62828] border border-[#C62828]">
-                  Errors: {logs.filter(l => l.level === "error").length}
-                </span>
-              </div>
-
-              {/* Loading state */}
-              {logsLoading && (
-                <div className="text-center py-4 text-[#555555]">
-                  <span className="inline-block animate-spin mr-2">⏳</span>
-                  Loading logs...
-                </div>
-              )}
-
-              {/* Error state */}
-              {logsError && (
-                <div className="p-3 rounded bg-[#FFEBEE] border border-[#C62828] text-[#C62828] text-sm">
-                  ⚠️ {logsError}
-                </div>
-              )}
-
-              {/* Log entries */}
-              <ul className="space-y-2" role="list" aria-label="Log entries">
-                {logs.map((log, i) => {
-                  const styles = getLogStyles(log.level);
-                  return (
-                    <li 
-                      key={i} 
-                      className={`p-3 rounded border-2 ${log.level === 'error' || log.level === 'warning' ? 'pb-4' : ''}`}
-                      style={{
-                        backgroundColor: styles.bg,
-                        borderColor: styles.border,
-                      }}
-                    >
-                      <div className="flex items-center gap-3">
-                        <span 
-                          className="px-2 py-0.5 text-xs font-bold uppercase rounded"
-                          style={{ 
-                            backgroundColor: styles.color, 
-                            color: "white" 
-                          }}
-                          aria-label={`Level: ${log.level}`}
-                        >
-                          {log.level[0].toUpperCase()}
-                        </span>
-                        <time className="text-xs text-[#616161] font-mono min-w-[70px]">
-                          {formatDate(log.timestamp)} {formatTime(log.timestamp)}
-                        </time>
-                        <span className="text-sm text-[#333333]">{log.message}</span>
-                      </div>
-                      {/* Extra description for errors and warnings */}
-                      {(log.level === 'error' || log.level === 'warning') && log.description && (
-                        <div 
-                          className="mt-2 p-2 text-xs rounded"
-                          style={{
-                            backgroundColor: log.level === 'error' ? '#FFEBEE' : '#FFF8E1',
-                            border: `1px dashed ${log.level === 'error' ? '#F44336' : '#FFC107'}`,
-                          }}
-                        >
-                          <span className="font-bold" style={{ color: '#F44336' }}>➜ </span>
-                          <span style={{ color: '#5D4037' }}>{log.description}</span>
+                  )}
+                  
+                  {logsError && (
+                    <div className="p-4 rounded-lg bg-red-50 text-red-600 text-sm">
+                      {logsError}
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    {logs.map((log, i) => (
+                      <div 
+                        key={i} 
+                        className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                      >
+                        {getLogIcon(log.level)}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            {getLogBadge(log.level)}
+                            <span className="text-xs text-slate-400 font-mono">
+                              {formatTime(log.timestamp)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-slate-700 dark:text-slate-300">
+                            {log.message}
+                          </p>
                         </div>
-                      )}
-                    </li>
-                  );
-                })}
-              </ul>
-            </MCPanel>
-          )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
-          {/* End of tabs */}
-        </div>
+            {/* Cron Jobs Tab */}
+            <TabsContent value="cronjobs">
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <CardTitle className="flex items-center gap-2">
+                    <Clock className="w-5 h-5" />
+                    Cron Jobs
+                  </CardTitle>
+                  <span className="text-sm text-slate-500">
+                    {mockCronJobs.filter(j => j.status === "active" || j.status === "running").length} Active
+                  </span>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    {mockCronJobs.map((job) => (
+                      <div 
+                        key={job.id} 
+                        className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                            {job.name}
+                          </h3>
+                          {getJobStatusBadge(job.status)}
+                        </div>
+                        <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+                          <span className="font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                            {job.schedule}
+                          </span>
+                          <span>Next: {job.nextRun}</span>
+                          <span>Last: {job.lastRun}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
+        </motion.div>
 
         {/* Footer */}
-        <footer 
-          className="text-center p-3 border-t-4 border-[#555555]"
-          style={{ backgroundColor: mcColors.stone }}
+        <motion.footer 
+          className="text-center text-sm text-slate-400 pt-4"
+          {...fadeIn}
+          transition={{ delay: 0.3 }}
         >
-          <p className="text-sm text-[#3F3F3F]">
-            Built for Koala • Running on <strong>OpenClaw</strong>
-          </p>
-        </footer>
+          Built for Koala • Running on OpenClaw
+        </motion.footer>
       </div>
     </main>
   );

@@ -49,7 +49,7 @@ const defaultLogs: LogEntry[] = [
   { timestamp: new Date().toISOString(), level: "info", message: "System initialized. Waiting for OpenClaw..." },
 ];
 
-const mockCronJobs: CronJob[] = [
+const cronJobs: CronJob[] = [
   { id: "1", name: "Daily Football Analysis", schedule: "0 17 * * *", status: "active", lastRun: "17:00", nextRun: "17:00" },
   { id: "2", name: "Asian Handicap Scan", schedule: "*/6 * * *", status: "running", lastRun: "12:00", nextRun: "18:00" },
   { id: "3", name: "Results Collector", schedule: "0 23 * * *", status: "active", lastRun: "23:00", nextRun: "23:00" },
@@ -138,7 +138,7 @@ export default function Home() {
     model: "MiniMax-M2.5",
     status: "online",
     tasksCompleted: 1284,
-    activeJobs: mockCronJobs.filter(j => j.status === "active" || j.status === "running").length,
+    activeJobs: cronJobs.filter(j => j.status === "active" || j.status === "running").length,
   };
 
   const NavItem = ({ view, icon: Icon, label }: { view: View; icon: any; label: string }) => (
@@ -405,7 +405,7 @@ export default function Home() {
                 </div>
 
                 <div className="grid gap-4">
-                  {mockCronJobs.map((job) => (
+                  {cronJobs.map((job) => (
                     <Card key={job.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-6">
                         <div className="flex items-start justify-between">

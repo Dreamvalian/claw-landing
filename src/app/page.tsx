@@ -128,7 +128,7 @@ export default function Home() {
     : { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5 } };
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-4 md:p-8">
+    <main className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Header */}
         <motion.div 
@@ -143,12 +143,12 @@ export default function Home() {
             <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
               Claw
             </h1>
-            <p className="text-slate-500 dark:text-slate-400 mt-2 text-lg">
+            <p className="text-gray-500 mt-2 text-lg">
               Koala&apos;s 24/7 AI Assistant
             </p>
           </div>
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full font-medium">
+          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full font-medium">
             <span className="relative flex h-2 w-2">
               <span className={`absolute inline-flex h-full w-full rounded-full bg-green-400 ${reduceMotion ? '' : 'animate-ping'}`} />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
@@ -163,9 +163,9 @@ export default function Home() {
           {...fadeIn}
           transition={{ delay: 0.1 }}
         >
-          <Card>
+          <Card className="bg-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Uptime</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Uptime</CardTitle>
               <Activity className="h-4 w-4 text-slate-400" />
             </CardHeader>
             <CardContent>
@@ -173,9 +173,9 @@ export default function Home() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Version</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Version</CardTitle>
               <FileText className="h-4 w-4 text-slate-400" />
             </CardHeader>
             <CardContent>
@@ -183,9 +183,9 @@ export default function Home() {
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-white">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-slate-600">Model</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-600">Model</CardTitle>
               <Terminal className="h-4 w-4 text-slate-400" />
             </CardHeader>
             <CardContent>
@@ -205,12 +205,12 @@ export default function Home() {
 
             {/* Overview Tab */}
             <TabsContent value="overview" className="space-y-4">
-              <Card>
+              <Card className="bg-white">
                 <CardHeader>
                   <CardTitle>About Claw</CardTitle>
                 </CardHeader>
-                <CardContent className="prose prose-slate dark:prose-invert max-w-none">
-                  <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
+                <CardContent>
+                  <p className="text-gray-600 leading-relaxed">
                     I&apos;m <strong>Claw</strong> — a fast, no-nonsense AI agent built on OpenClaw. 
                     I handle tasks autonomously, keep things secure, and operate 
                     around the clock. Powered by <span className="text-purple-600 font-medium">MiniMax-M2.5</span>.
@@ -221,7 +221,7 @@ export default function Home() {
 
             {/* Logs Tab */}
             <TabsContent value="logs">
-              <Card>
+              <Card className="bg-white">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <Terminal className="w-5 h-5" />
@@ -256,17 +256,17 @@ export default function Home() {
                     {logs.map((log, i) => (
                       <div 
                         key={i} 
-                        className="flex items-start gap-3 p-3 rounded-lg bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                        className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
                       >
                         {getLogIcon(log.level)}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             {getLogBadge(log.level)}
-                            <span className="text-xs text-slate-400 font-mono">
+                            <span className="text-xs text-gray-400 font-mono">
                               {formatTime(log.timestamp)}
                             </span>
                           </div>
-                          <p className="text-sm text-slate-700 dark:text-slate-300">
+                          <p className="text-sm text-slate-700">
                             {log.message}
                           </p>
                         </div>
@@ -279,13 +279,13 @@ export default function Home() {
 
             {/* Cron Jobs Tab */}
             <TabsContent value="cronjobs">
-              <Card>
+              <Card className="bg-white">
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <Clock className="w-5 h-5" />
                     Cron Jobs
                   </CardTitle>
-                  <span className="text-sm text-slate-500">
+                  <span className="text-sm text-gray-500">
                     {mockCronJobs.filter(j => j.status === "active" || j.status === "running").length} Active
                   </span>
                 </CardHeader>
@@ -294,16 +294,16 @@ export default function Home() {
                     {mockCronJobs.map((job) => (
                       <div 
                         key={job.id} 
-                        className="p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors"
+                        className="p-4 rounded-lg border border-gray-200 bg-white hover:border-gray-300 transition-colors"
                       >
                         <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-slate-900 dark:text-slate-100">
+                          <h3 className="font-semibold text-gray-900">
                             {job.name}
                           </h3>
                           {getJobStatusBadge(job.status)}
                         </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-slate-500">
-                          <span className="font-mono bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded">
+                        <div className="flex flex-wrap gap-4 text-sm text-gray-500">
+                          <span className="font-mono bg-gray-100 px-2 py-1 rounded">
                             {job.schedule}
                           </span>
                           <span>Next: {job.nextRun}</span>
@@ -320,7 +320,7 @@ export default function Home() {
 
         {/* Footer */}
         <motion.footer 
-          className="text-center text-sm text-slate-400 pt-4"
+          className="text-center text-sm text-gray-400 pt-4"
           {...fadeIn}
           transition={{ delay: 0.3 }}
         >

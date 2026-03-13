@@ -238,7 +238,7 @@ export default function Home() {
         animate={{ width: sidebarOpen ? (isMobile ? 280 : 280) : 0 }}
         className={`bg-white border-r border-gray-200 flex flex-col overflow-hidden ${isMobile ? "fixed h-full z-50" : "relative h-screen sticky top-0"}`}
       >
-        <div className="p-6">
+        <div className="p-6 brutal-border">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-200">
@@ -312,7 +312,7 @@ export default function Home() {
         </header>
 
         {/* Content Area */}
-        <div className="p-6">
+        <div className="p-6 brutal-border">
           <AnimatePresence mode="wait">
             {activeView === "dashboard" && (
               <motion.div
@@ -354,8 +354,8 @@ export default function Home() {
                     { label: "Active Jobs", value: stats.activeJobs.toString(), icon: Clock,
   HardDrive, color: "text-amber-600", bg: "bg-amber-50" },
                   ].map((stat, i) => (
-                    <Card key={i} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
+                    <Card key={i} className="brutal-card">
+                      <CardContent className="p-6 brutal-border">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-gray-500">{stat.label}</p>
@@ -465,8 +465,8 @@ export default function Home() {
 
                 <div className="grid gap-4">
                   {cronJobs.map((job) => (
-                    <Card key={job.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
+                    <Card key={job.id} className="brutal-card">
+                      <CardContent className="p-6 brutal-border">
                         <div className="flex items-start justify-between">
                           <div className="space-y-1">
                             <div className="flex items-center gap-3">

@@ -1,13 +1,12 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-sans);
+  --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -38,108 +37,95 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* Minecraft Theme */
 :root {
-  /* Minecraft-inspired colors */
-  --minecraft-dirt: #5D4037;
-  --minecraft-grass: #4CAF50;
-  --minecraft-stone: #757575;
-  --minecraft-wood: #8D6E63;
-  --minecraft-sky: #87CEEB;
-  --minecraft-diamond: #00BCD4;
-  --minecraft-gold: #FFD700;
-  --minecraft-redstone: #F44336;
-  --minecraft-obsidian: #1A1A2E;
-  --minecraft-creeper: #0CB758;
-  --minecraft-pig: #F0A6A6;
-  --minecraft-cow: #5D4037;
-  
-  --background: #1A1A2E;
-  --foreground: #E8E8E8;
-  --card: #2D2D44;
-  --card-foreground: #E8E8E8;
-  --popover: #2D2D44;
-  --popover-foreground: #E8E8E8;
-  --primary: #4CAF50;
-  --primary-foreground: #1A1A2E;
-  --secondary: #5D4037;
-  --secondary-foreground: #E8E8E8;
-  --muted: #3D3D5C;
-  --muted-foreground: #A0A0A0;
-  --accent: #FFD700;
-  --accent-foreground: #1A1A2E;
-  --destructive: #F44336;
-  --border: #4A4A6A;
-  --input: #4A4A6A;
-  --ring: #4CAF50;
-  --chart-1: #4CAF50;
-  --chart-2: #FFD700;
-  --chart-3: #00BCD4;
-  --chart-4: #F44336;
-  --chart-5: #8D6E63;
-  --radius: 4px;
-  --sidebar: #2D2D44;
-  --sidebar-foreground: #E8E8E8;
-  --sidebar-primary: #4CAF50;
-  --sidebar-primary-foreground: #1A1A2E;
-  --sidebar-accent: #FFD700;
-  --sidebar-accent-foreground: #1A1A2E;
-  --sidebar-border: #4A4A6A;
-  --sidebar-ring: #4CAF50;
+  --radius: 0.625rem;
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --card: 0 0% 100%;
+  --card-foreground: 222.2 84% 4.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 222.2 84% 4.9%;
+  --primary: 262.1 83.3% 57.8%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 262.1 83.3% 57.8%;
+  --chart-1: 12 76% 61%;
+  --chart-2: 173 58% 39%;
+  --chart-3: 197 37% 24%;
+  --chart-4: 43 74% 66%;
+  --chart-5: 27 87% 67%;
 }
 
 .dark {
-  --background: #1A1A2E;
-  --foreground: #E8E8E8;
-  --card: #2D2D44;
-  --card-foreground: #E8E8E8;
-  --popover: #2D2D44;
-  --popover-foreground: #E8E8E8;
-  --primary: #4CAF50;
-  --primary-foreground: #1A1A2E;
-  --secondary: #5D4037;
-  --secondary-foreground: #E8E8E8;
-  --muted: #3D3D5C;
-  --muted-foreground: #A0A0A0;
-  --accent: #FFD700;
-  --accent-foreground: #1A1A2E;
-  --destructive: #F44336;
-  --border: #4A4A6A;
-  --input: #4A4A6A;
-  --ring: #4CAF50;
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 263.4 70% 50.4%;
+  --primary-foreground: 210 40% 98%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 263.4 70% 50.4%;
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    @apply border-border;
   }
   body {
     @apply bg-background text-foreground;
-    font-family: 'Courier New', Courier, monospace;
-    image-rendering: pixelated;
-  }
-  html {
-    @apply font-sans;
-    scroll-behavior: smooth;
   }
 }
 
-/* Accessibility: Focus visible styles */
-:focus-visible {
-  outline: 3px solid #B8860B;
-  outline-offset: 2px;
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
 }
 
-/* Accessibility: Reduce motion */
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -147,73 +133,5 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-/* High contrast mode support */
-@media (prefers-contrast: high) {
-  .border-2 {
-    border-width: 3px !important;
-  }
-}
-
-/* Minecraft-style scrollbar */
-::-webkit-scrollbar {
-  width: 12px;
-}
-
-::-webkit-scrollbar-track {
-  background: #C6C6C6;
-  border: 2px solid #555555;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #8B8B8B;
-  border: 2px solid #555555;
-  box-shadow: inset -2px -2px 0 #373737, inset 2px 2px 0 #FFFFFF;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #A0A0A0;
-}
-
-/* Screen reader only content */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.sr-only:focus {
-  position: static;
-  width: auto;
-  height: auto;
-  padding: inherit;
-  margin: inherit;
-  overflow: visible;
-  clip: auto;
-  white-space: normal;
-  
-  /* Minecraft-style blocky buttons */
-  button, .btn {
-    border-radius: 4px !important;
-    box-shadow: inset -2px -2px 0px rgba(0,0,0,0.3), 
-                inset 2px 2px 0px rgba(255,255,255,0.1) !important;
-  }
-  
-  /* Pixel-style cards */
-  .card {
-    box-shadow: 4px 4px 0px rgba(0,0,0,0.3) !important;
-  }
-  
-  /* Creeper-style accent */
-  .creeper-glow {
-    text-shadow: 0 0 10px #0CB758;
   }
 }

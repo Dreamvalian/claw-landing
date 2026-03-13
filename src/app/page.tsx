@@ -1,11 +1,31 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Activity, 
+  Terminal, 
+  Clock, 
+  Settings, 
+  CheckCircle2, 
+  AlertCircle, 
+  Info,
+  Zap,
+  Server,
+  Calendar,
+  ChevronRight,
+  RefreshCw,
+  Menu,
+  X,
+  Home,
+  Bot
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Activity, FileText, Clock, Terminal, AlertCircle, CheckCircle, Info } from "lucide-react";
-import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface LogEntry {
   timestamp: string;
@@ -23,8 +43,10 @@ interface CronJob {
   nextRun: string;
 }
 
+type View = "dashboard" | "logs" | "cronjobs";
+
 const defaultLogs: LogEntry[] = [
-  { timestamp: new Date().toISOString(), level: "info", message: "Waiting for logs from OpenClaw..." },
+  { timestamp: new Date().toISOString(), level: "info", message: "System initialized. Waiting for OpenClaw..." },
 ];
 
 const mockCronJobs: CronJob[] = [
@@ -35,46 +57,47 @@ const mockCronJobs: CronJob[] = [
 
 const getLogIcon = (level: string) => {
   switch (level) {
-    case "info": return <Info className="w-4 h-4 text-blue-500" />;
+    case "success": return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
+    case "error": return <AlertCircle className="w-4 h-4 text-rose-500" />;
     case "warning": return <AlertCircle className="w-4 h-4 text-amber-500" />;
-    case "error": return <AlertCircle className="w-4 h-4 text-red-500" />;
-    case "success": return <CheckCircle className="w-4 h-4 text-green-500" />;
-    default: return <Info className="w-4 h-4 text-gray-500" />;
+    default: return <Info className="w-4 h-4 text-blue-500" />;
   }
 };
 
-const getLogBadge = (level: string) => {
+const getLogBorder = (level: string) => {
   switch (level) {
-    case "info": return <Badge variant="secondary" className="bg-blue-100 text-blue-700 hover:bg-blue-100">Info</Badge>;
-    case "warning": return <Badge variant="secondary" className="bg-amber-100 text-amber-700 hover:bg-amber-100">Warning</Badge>;
-    case "error": return <Badge variant="destructive">Error</Badge>;
-    case "success": return <Badge variant="secondary" className="bg-green-100 text-green-700 hover:bg-green-100">Success</Badge>;
-    default: return <Badge variant="outline">Unknown</Badge>;
+    case "success": return "border-l-emerald-500";
+    case "error": return "border-l-rose-500";
+    case "warning": return "border-l-amber-500";
+    default: return "border-l-blue-500";
   }
 };
 
-const getJobStatusBadge = (status: string) => {
+const getJobBadge = (status: string) => {
   switch (status) {
-    case "active": return <Badge variant="secondary" className="bg-green-100 text-green-700">Active</Badge>;
-    case "running": return <Badge className="bg-blue-500">Running</Badge>;
-    case "paused": return <Badge variant="outline">Paused</Badge>;
+    case "active": return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Active</Badge>;
+    case "running": return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 animate-pulse">Running</Badge>;
+    case "paused": return <Badge variant="secondary">Paused</Badge>;
     case "error": return <Badge variant="destructive">Error</Badge>;
     default: return <Badge variant="outline">Unknown</Badge>;
   }
 };
 
 export default function Home() {
+  const [activeView, setActiveView] = useState<View>("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [logs, setLogs] = useState<LogEntry[]>(defaultLogs);
   const [logsLoading, setLogsLoading] = useState(true);
-  const [logsError, setLogsError] = useState<string | null>(null);
-  const [reduceMotion, setReduceMotion] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduceMotion(mediaQuery.matches);
-    const handler = (e: MediaQueryListEvent) => setReduceMotion(e.matches);
-    mediaQuery.addEventListener("change", handler);
-    return () => mediaQuery.removeEventListener("change", handler);
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+      if (window.innerWidth < 768) setSidebarOpen(false);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
   }, []);
 
   useEffect(() => {
@@ -88,9 +111,7 @@ export default function Home() {
           typeof log === "string" ? JSON.parse(log) : log
         );
         setLogs(parsedLogs.length > 0 ? parsedLogs : defaultLogs);
-      } catch (err) {
-        console.error("Error fetching logs:", err);
-        setLogsError("Failed to load logs");
+      } catch {
         setLogs(defaultLogs);
       } finally {
         setLogsLoading(false);
@@ -102,231 +123,314 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  const status = {
-    agent: "online",
-    uptime: "24/7",
-    version: "2026.3.8",
-    model: "MiniMax-M2.5",
-  };
-
   const formatTime = (timestamp: string) => {
     try {
       const date = new Date(timestamp);
-      return date.toLocaleTimeString("en-US", { 
-        hour12: false, 
-        hour: "2-digit", 
-        minute: "2-digit", 
-        second: "2-digit" 
-      });
+      return date.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit", second: "2-digit" });
     } catch {
       return timestamp;
     }
   };
 
-  const fadeIn = reduceMotion 
-    ? {} 
-    : { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.5 } };
+  const stats = {
+    uptime: "24/7",
+    version: "2026.3.8",
+    model: "MiniMax-M2.5",
+    status: "online",
+    tasksCompleted: 1284,
+    activeJobs: mockCronJobs.filter(j => j.status === "active" || j.status === "running").length,
+  };
+
+  const NavItem = ({ view, icon: Icon, label }: { view: View; icon: any; label: string }) => (
+    <button
+      onClick={() => {
+        setActiveView(view);
+        if (isMobile) setSidebarOpen(false);
+      }}
+      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+        activeView === view 
+          ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-200" 
+          : "hover:bg-gray-100 text-gray-600"
+      }`}
+    >
+      <Icon className={`w-5 h-5 ${activeView === view ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />
+      <span className="font-medium">{label}</span>
+      {activeView === view && <ChevronRight className="w-4 h-4 ml-auto" />}
+    </button>
+  );
 
   return (
-    <main className="min-h-screen bg-gray-50 p-4 md:p-8">
-      <div className="max-w-4xl mx-auto space-y-6">
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Mobile Overlay */}
+      <AnimatePresence>
+        {isMobile && sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setSidebarOpen(false)}
+            className="fixed inset-0 bg-black/50 z-40"
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Sidebar */}
+      <motion.aside
+        initial={false}
+        animate={{ width: sidebarOpen ? (isMobile ? 280 : 280) : 0 }}
+        className={`bg-white border-r border-gray-200 flex flex-col overflow-hidden ${isMobile ? "fixed h-full z-50" : "relative h-screen sticky top-0"}`}
+      >
+        <div className="p-6">
+          {/* Logo */}
+          <div className="flex items-center gap-3 mb-8">
+            <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-200">
+              <span className="text-2xl">🐨</span>
+            </div>
+            <div>
+              <h1 className="font-bold text-xl text-gray-900">Koala</h1>
+              <p className="text-xs text-gray-500">Assistance Hub</p>
+            </div>
+          </div>
+
+          {/* Navigation */}
+          <nav className="space-y-2">
+            <NavItem view="dashboard" icon={Home} label="Dashboard" />
+            <NavItem view="logs" icon={Terminal} label="System Logs" />
+            <NavItem view="cronjobs" icon={Calendar} label="Cron Jobs" />
+          </nav>
+        </div>
+
+        <div className="mt-auto p-6 border-t border-gray-100">
+          <Card className="bg-gradient-to-br from-violet-50 to-purple-50 border-0">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-xs font-medium text-emerald-700">System Online</span>
+              </div>
+              <p className="text-xs text-gray-600">Claw AI Assistant v{stats.version}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </motion.aside>
+
+      {/* Main Content */}
+      <main className="flex-1 min-w-0">
         {/* Header */}
-        <motion.div 
-          className="text-center space-y-4"
-          {...fadeIn}
-        >
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl shadow-lg">
-            <span className="text-4xl">🦦</span>
+        <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="lg:hidden"
+              >
+                {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              </Button>
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900">
+                  {activeView === "dashboard" && "Dashboard"}
+                  {activeView === "logs" && "System Logs"}
+                  {activeView === "cronjobs" && "Cron Jobs"}
+                </h2>
+                <p className="text-sm text-gray-500">
+                  {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex items-center gap-4">
+              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full">
+                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                <span className="text-sm font-medium text-emerald-700">Online</span>
+              </div>
+              <Avatar className="w-10 h-10 border-2 border-violet-100">
+                <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white text-sm">
+                  KO
+                </AvatarFallback>
+              </Avatar>
+            </div>
           </div>
-          
-          <div>
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight bg-gradient-to-r from-violet-600 to-purple-600 bg-clip-text text-transparent">
-              Claw
-            </h1>
-            <p className="text-gray-500 mt-2 text-lg">
-              Koala&apos;s 24/7 AI Assistant
-            </p>
-          </div>
+        </header>
 
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded-full font-medium">
-            <span className="relative flex h-2 w-2">
-              <span className={`absolute inline-flex h-full w-full rounded-full bg-green-400 ${reduceMotion ? '' : 'animate-ping'}`} />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
-            </span>
-            Online & Ready
-          </div>
-        </motion.div>
-
-        {/* Status Cards */}
-        <motion.div 
-          className="grid grid-cols-1 md:grid-cols-3 gap-4"
-          {...fadeIn}
-          transition={{ delay: 0.1 }}
-        >
-          <Card className="bg-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Uptime</CardTitle>
-              <Activity className="h-4 w-4 text-slate-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{status.uptime}</div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Version</CardTitle>
-              <FileText className="h-4 w-4 text-slate-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{status.version}</div>
-            </CardContent>
-          </Card>
-          
-          <Card className="bg-white">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">Model</CardTitle>
-              <Terminal className="h-4 w-4 text-slate-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{status.model}</div>
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Main Content Tabs */}
-        <motion.div {...fadeIn} transition={{ delay: 0.2 }}>
-          <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="logs">System Logs</TabsTrigger>
-              <TabsTrigger value="cronjobs">Cron Jobs</TabsTrigger>
-            </TabsList>
-
-            {/* Overview Tab */}
-            <TabsContent value="overview" className="space-y-4">
-              <Card className="bg-white">
-                <CardHeader>
-                  <CardTitle>About Claw</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-gray-600 leading-relaxed">
-                    I&apos;m <strong>Claw</strong> — a fast, no-nonsense AI agent built on OpenClaw. 
-                    I handle tasks autonomously, keep things secure, and operate 
-                    around the clock. Powered by <span className="text-purple-600 font-medium">MiniMax-M2.5</span>.
-                  </p>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Logs Tab */}
-            <TabsContent value="logs">
-              <Card className="bg-white">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Terminal className="w-5 h-5" />
-                    System Logs
-                  </CardTitle>
-                  <div className="flex gap-2 text-sm">
-                    <span className="text-slate-500">
-                      Info: {logs.filter(l => l.level === "info").length}
-                    </span>
-                    <span className="text-slate-500">
-                      Warnings: {logs.filter(l => l.level === "warning").length}
-                    </span>
-                    <span className="text-slate-500">
-                      Errors: {logs.filter(l => l.level === "error").length}
-                    </span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  {logsLoading && (
-                    <div className="text-center py-8 text-slate-500">
-                      Loading logs...
+        {/* Content Area */}
+        <div className="p-6">
+          <AnimatePresence mode="wait">
+            {activeView === "dashboard" && (
+              <motion.div
+                key="dashboard"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-6"
+              >
+                {/* Welcome Card */}
+                <Card className="bg-gradient-to-r from-violet-600 to-purple-600 text-white border-0 overflow-hidden relative">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
+                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
+                  <CardContent className="relative p-8">
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <Bot className="w-5 h-5 text-violet-200" />
+                          <span className="text-violet-100 text-sm font-medium">AI Assistant</span>
+                        </div>
+                        <h3 className="text-3xl font-bold">Welcome back, Koala</h3>
+                        <p className="text-violet-100 max-w-md">
+                          Your AI assistant is running smoothly. All systems operational and ready to help.
+                        </p>
+                      </div>
+                      <div className="hidden sm:block text-right">
+                        <div className="text-5xl font-bold">🦦</div>
+                      </div>
                     </div>
-                  )}
-                  
-                  {logsError && (
-                    <div className="p-4 rounded-lg bg-red-50 text-red-600 text-sm">
-                      {logsError}
-                    </div>
-                  )}
-                  
-                  <div className="space-y-2">
-                    {logs.map((log, i) => (
-                      <div 
-                        key={i} 
-                        className="flex items-start gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors"
-                      >
-                        {getLogIcon(log.level)}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            {getLogBadge(log.level)}
-                            <span className="text-xs text-gray-400 font-mono">
-                              {formatTime(log.timestamp)}
-                            </span>
+                  </CardContent>
+                </Card>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {[
+                    { label: "Uptime", value: stats.uptime, icon: Activity, color: "text-emerald-600", bg: "bg-emerald-50" },
+                    { label: "Version", value: stats.version, icon: Settings, color: "text-blue-600", bg: "bg-blue-50" },
+                    { label: "Model", value: stats.model, icon: Zap, color: "text-violet-600", bg: "bg-violet-50" },
+                    { label: "Active Jobs", value: stats.activeJobs.toString(), icon: Server, color: "text-amber-600", bg: "bg-amber-50" },
+                  ].map((stat, i) => (
+                    <Card key={i} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-medium text-gray-500">{stat.label}</p>
+                            <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
                           </div>
-                          <p className="text-sm text-slate-700">
-                            {log.message}
-                          </p>
+                          <div className={`w-12 h-12 ${stat.bg} rounded-xl flex items-center justify-center`}>
+                            <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
 
-            {/* Cron Jobs Tab */}
-            <TabsContent value="cronjobs">
-              <Card className="bg-white">
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="w-5 h-5" />
-                    Cron Jobs
-                  </CardTitle>
-                  <span className="text-sm text-gray-500">
-                    {mockCronJobs.filter(j => j.status === "active" || j.status === "running").length} Active
-                  </span>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {mockCronJobs.map((job) => (
-                      <div 
-                        key={job.id} 
-                        className="p-4 rounded-lg border border-gray-200 bg-white hover:border-gray-300 transition-colors"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold text-gray-900">
-                            {job.name}
-                          </h3>
-                          {getJobStatusBadge(job.status)}
-                        </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-gray-500">
-                          <span className="font-mono bg-gray-100 px-2 py-1 rounded">
-                            {job.schedule}
-                          </span>
-                          <span>Next: {job.nextRun}</span>
-                          <span>Last: {job.lastRun}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-        </motion.div>
+                {/* About Section */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Bot className="w-5 h-5 text-violet-600" />
+                      About Claw
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <p className="text-gray-600 leading-relaxed">
+                      <strong>Claw</strong> is your dedicated AI assistant built on OpenClaw. 
+                      Designed to handle tasks autonomously, maintain security, and operate 
+                      24/7 without interruption. Powered by <span className="text-violet-600 font-medium">MiniMax-M2.5</span>.
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary" className="bg-violet-50 text-violet-700">Autonomous</Badge>
+                      <Badge variant="secondary" className="bg-emerald-50 text-emerald-700">Secure</Badge>
+                      <Badge variant="secondary" className="bg-blue-50 text-blue-700">24/7 Operation</Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            )}
 
-        {/* Footer */}
-        <motion.footer 
-          className="text-center text-sm text-gray-400 pt-4"
-          {...fadeIn}
-          transition={{ delay: 0.3 }}
-        >
-          Built for Koala • Running on OpenClaw
-        </motion.footer>
-      </div>
-    </main>
+            {activeView === "logs" && (
+              <motion.div
+                key="logs"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex gap-4">
+                    <div className="text-sm">
+                      <span className="text-gray-500">Info:</span>{" "}
+                      <span className="font-medium text-gray-900">{logs.filter(l => l.level === "info").length}</span>
+                    </div>
+                    <div className="text-sm">
+                      <span className="text-gray-500">Warnings:</span>{" "}
+                      <span className="font-medium text-amber-600">{logs.filter(l => l.level === "warning").length}</span>
+                    </div>
+                    <div className="text-sm">
+                      <span className="text-gray-500">Errors:</span>{" "}
+                      <span className="font-medium text-rose-600">{logs.filter(l => l.level === "error").length}</span>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Refresh
+                  </Button>
+                </div>
+
+                <Card>
+                  <ScrollArea className="h-[500px]">
+                    <div className="p-4 space-y-2">
+                      {logsLoading && (
+                        <div className="text-center py-8 text-gray-500">Loading logs...</div>
+                      )}
+                      {logs.map((log, i) => (
+                        <div
+                          key={i}
+                          className={`flex items-start gap-3 p-3 rounded-lg bg-white border border-gray-100 border-l-4 ${getLogBorder(log.level)} hover:shadow-sm transition-shadow`}
+                        >
+                          {getLogIcon(log.level)}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="text-xs font-mono text-gray-400">{formatTime(log.timestamp)}</span>
+                            </div>
+                            <p className="text-sm text-gray-700">{log.message}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                </Card>
+              </motion.div>
+            )}
+
+            {activeView === "cronjobs" && (
+              <motion.div
+                key="cronjobs"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="space-y-4"
+              >
+                <div className="flex items-center justify-between">
+                  <p className="text-sm text-gray-500">
+                    <span className="font-medium text-gray-900">{stats.activeJobs}</span> active scheduled tasks
+                  </p>
+                </div>
+
+                <div className="grid gap-4">
+                  {mockCronJobs.map((job) => (
+                    <Card key={job.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-6">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-3">
+                              <h3 className="font-semibold text-gray-900">{job.name}</h3>
+                              {getJobBadge(job.status)}
+                            </div>
+                            <div className="flex items-center gap-4 text-sm text-gray-500">
+                              <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">{job.schedule}</span>
+                              <span>Last: {job.lastRun}</span>
+                              <span>Next: {job.nextRun}</span>
+                            </div>
+                          </div>
+                          <Clock className="w-5 h-5 text-gray-400" />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </main>
+    </div>
   );
 }

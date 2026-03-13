@@ -5,7 +5,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Activity, 
   Terminal, 
-  Clock, 
+  Clock,
+  HardDrive, 
   Settings, 
   CheckCircle2, 
   AlertCircle, 
@@ -90,6 +91,7 @@ export default function Home() {
   const [logsLoading, setLogsLoading] = useState(true);
   const [cronJobs, setCronJobs] = useState<CronJob[]>([]);
   const [cronLoading, setCronLoading] = useState(true);
+  const [systemStatus, setSystemStatus] = useState({ gateway: 'unknown', hyperspace: 'unknown', disk: 'unknown' });
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -123,6 +125,25 @@ export default function Home() {
     fetchLogs();
     const interval = setInterval(fetchLogs, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Fetch system status
+  useEffect(() => {
+    const fetchSystemStatus = async () => {
+      try {
+        const res = await fetch("/api/cron");
+        const data = await res.json();
+        if (data.system) {
+          setSystemStatus(data.system);
+        }
+      } catch (err) {
+        console.error("Error fetching system status:", err);
+      }
+    };
+
+    fetchSystemStatus();
+    const sysInterval = setInterval(fetchSystemStatus, 30000);
+    return () => clearInterval(sysInterval);
   }, []);
 
   // Fetch cron jobs
@@ -169,12 +190,13 @@ export default function Home() {
     uptime: "24/7",
     version: "2026.3.12",
     model: "MiniMax-M2.5",
-    status: "online",
+    status: systemStatus.gateway === 'running' ? 'online' : 'offline',
     tasksCompleted: 1284,
     activeJobs: cronJobs.length,
-    gateway: "running",
-    hyperspace: "RUNNING",
-    disk: "16%",
+    gateway: systemStatus.gateway || 'unknown',
+    hyperspace: systemStatus.hyperspace || 'unknown',
+    disk: systemStatus.disk || 'unknown',
+    heartbeat: "active",
   };
 
   const NavItem = ({ view, icon: Icon, label }: { view: View; icon: any; label: string }) => (
@@ -326,10 +348,11 @@ export default function Home() {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
-                    { label: "Uptime", value: stats.uptime, icon: Activity, color: "text-emerald-600", bg: "bg-emerald-50" },
-                    { label: "Version", value: stats.version, icon: Settings, color: "text-blue-600", bg: "bg-blue-50" },
-                    { label: "Model", value: stats.model, icon: Zap, color: "text-violet-600", bg: "bg-violet-50" },
-                    { label: "Active Jobs", value: stats.activeJobs.toString(), icon: Server, color: "text-amber-600", bg: "bg-amber-50" },
+                    { label: "Gateway", value: stats.gateway, icon: Server, color: stats.gateway === 'running' ? "text-emerald-600" : "text-red-600", bg: stats.gateway === 'running' ? "bg-emerald-50" : "bg-red-50" },
+                    { label: "Hyperspace", value: stats.hyperspace, icon: Zap, color: stats.hyperspace === 'RUNNING' ? "text-emerald-600" : "text-red-600", bg: stats.hyperspace === 'RUNNING' ? "bg-emerald-50" : "bg-red-50" },
+                    { label: "Disk", value: stats.disk, icon: HardDrive, color: "text-blue-600", bg: "bg-blue-50" },
+                    { label: "Active Jobs", value: stats.activeJobs.toString(), icon: Clock,
+  HardDrive, color: "text-amber-600", bg: "bg-amber-50" },
                   ].map((stat, i) => (
                     <Card key={i} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-6">

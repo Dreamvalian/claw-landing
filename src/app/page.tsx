@@ -88,6 +88,8 @@ export default function Home() {
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [logs, setLogs] = useState<LogEntry[]>(defaultLogs);
   const [logsLoading, setLogsLoading] = useState(true);
+  const [cronJobs, setCronJobs] = useState<CronJob[]>([]);
+  const [cronLoading, setCronLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -121,6 +123,37 @@ export default function Home() {
     fetchLogs();
     const interval = setInterval(fetchLogs, 30000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Fetch cron jobs
+  useEffect(() => {
+    const fetchCronJobs = async () => {
+      try {
+        setCronLoading(true);
+        const res = await fetch("/api/cron");
+        if (!res.ok) throw new Error("Failed to fetch cron");
+        const data = await res.json();
+        
+        const mappedJobs = (data.jobs || []).map((job: any, index: number) => ({
+          id: String(index + 1),
+          name: job.name,
+          schedule: job.schedule,
+          status: job.status === 'running' ? 'running' : 'idle',
+          lastRun: job.lastRun || 'Never',
+          nextRun: job.nextRun || 'N/A',
+        }));
+        
+        setCronJobs(mappedJobs);
+      } catch (err) {
+        console.error("Error fetching cron jobs:", err);
+      } finally {
+        setCronLoading(false);
+      }
+    };
+
+    fetchCronJobs();
+    const cronInterval = setInterval(fetchCronJobs, 60000);
+    return () => clearInterval(cronInterval);
   }, []);
 
   const formatTime = (timestamp: string) => {

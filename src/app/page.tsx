@@ -167,11 +167,14 @@ export default function Home() {
 
   const stats = {
     uptime: "24/7",
-    version: "2026.3.8",
+    version: "2026.3.12",
     model: "MiniMax-M2.5",
     status: "online",
     tasksCompleted: 1284,
-    activeJobs: cronJobs.filter(j => j.status === "active" || j.status === "running").length,
+    activeJobs: cronJobs.length,
+    gateway: "running",
+    hyperspace: "RUNNING",
+    disk: "16%",
   };
 
   const NavItem = ({ view, icon: Icon, label }: { view: View; icon: any; label: string }) => (

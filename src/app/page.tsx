@@ -5,8 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Activity, 
   Terminal, 
-  Clock,
-  HardDrive, 
+  Clock, 
   Settings, 
   CheckCircle2, 
   AlertCircle, 
@@ -91,7 +90,6 @@ export default function Home() {
   const [logsLoading, setLogsLoading] = useState(true);
   const [cronJobs, setCronJobs] = useState<CronJob[]>([]);
   const [cronLoading, setCronLoading] = useState(true);
-  const [systemStatus, setSystemStatus] = useState({ gateway: 'unknown', hyperspace: 'unknown', disk: 'unknown' });
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -125,25 +123,6 @@ export default function Home() {
     fetchLogs();
     const interval = setInterval(fetchLogs, 30000);
     return () => clearInterval(interval);
-  }, []);
-
-  // Fetch system status
-  useEffect(() => {
-    const fetchSystemStatus = async () => {
-      try {
-        const res = await fetch("/api/cron");
-        const data = await res.json();
-        if (data.system) {
-          setSystemStatus(data.system);
-        }
-      } catch (err) {
-        console.error("Error fetching system status:", err);
-      }
-    };
-
-    fetchSystemStatus();
-    const sysInterval = setInterval(fetchSystemStatus, 30000);
-    return () => clearInterval(sysInterval);
   }, []);
 
   // Fetch cron jobs
@@ -190,13 +169,12 @@ export default function Home() {
     uptime: "24/7",
     version: "2026.3.12",
     model: "MiniMax-M2.5",
-    status: systemStatus.gateway === 'running' ? 'online' : 'offline',
+    status: "online",
     tasksCompleted: 1284,
     activeJobs: cronJobs.length,
-    gateway: systemStatus.gateway || 'unknown',
-    hyperspace: systemStatus.hyperspace || 'unknown',
-    disk: systemStatus.disk || 'unknown',
-    heartbeat: "active",
+    gateway: "running",
+    hyperspace: "RUNNING",
+    disk: "16%",
   };
 
   const NavItem = ({ view, icon: Icon, label }: { view: View; icon: any; label: string }) => (
@@ -238,7 +216,7 @@ export default function Home() {
         animate={{ width: sidebarOpen ? (isMobile ? 280 : 280) : 0 }}
         className={`bg-white border-r border-gray-200 flex flex-col overflow-hidden ${isMobile ? "fixed h-full z-50" : "relative h-screen sticky top-0"}`}
       >
-        <div className="p-6 brutal-border">
+        <div className="p-6">
           {/* Logo */}
           <div className="flex items-center gap-3 mb-8">
             <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-200">
@@ -312,7 +290,7 @@ export default function Home() {
         </header>
 
         {/* Content Area */}
-        <div className="p-6 brutal-border">
+        <div className="p-6">
           <AnimatePresence mode="wait">
             {activeView === "dashboard" && (
               <motion.div
@@ -348,14 +326,13 @@ export default function Home() {
                 {/* Stats Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
-                    { label: "Gateway", value: stats.gateway, icon: Server, color: stats.gateway === 'running' ? "text-emerald-600" : "text-red-600", bg: stats.gateway === 'running' ? "bg-emerald-50" : "bg-red-50" },
-                    { label: "Hyperspace", value: stats.hyperspace, icon: Zap, color: stats.hyperspace === 'RUNNING' ? "text-emerald-600" : "text-red-600", bg: stats.hyperspace === 'RUNNING' ? "bg-emerald-50" : "bg-red-50" },
-                    { label: "Disk", value: stats.disk, icon: HardDrive, color: "text-blue-600", bg: "bg-blue-50" },
-                    { label: "Active Jobs", value: stats.activeJobs.toString(), icon: Clock,
-  HardDrive, color: "text-amber-600", bg: "bg-amber-50" },
+                    { label: "Uptime", value: stats.uptime, icon: Activity, color: "text-emerald-600", bg: "bg-emerald-50" },
+                    { label: "Version", value: stats.version, icon: Settings, color: "text-blue-600", bg: "bg-blue-50" },
+                    { label: "Model", value: stats.model, icon: Zap, color: "text-violet-600", bg: "bg-violet-50" },
+                    { label: "Active Jobs", value: stats.activeJobs.toString(), icon: Server, color: "text-amber-600", bg: "bg-amber-50" },
                   ].map((stat, i) => (
-                    <Card key={i} className="brutal-card">
-                      <CardContent className="p-6 brutal-border">
+                    <Card key={i} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-6">
                         <div className="flex items-center justify-between">
                           <div>
                             <p className="text-sm font-medium text-gray-500">{stat.label}</p>
@@ -465,8 +442,8 @@ export default function Home() {
 
                 <div className="grid gap-4">
                   {cronJobs.map((job) => (
-                    <Card key={job.id} className="brutal-card">
-                      <CardContent className="p-6 brutal-border">
+                    <Card key={job.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-6">
                         <div className="flex items-start justify-between">
                           <div className="space-y-1">
                             <div className="flex items-center gap-3">

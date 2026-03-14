@@ -92,6 +92,8 @@ export default function KoalaHub() {
   const [logs, setLogs] = useState<LogEntry[]>(defaultLogs);
   const [logsLoading, setLogsLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
+  const [cronJobs, setCronJobs] = useState<CronJob[]>(mockCronJobs);
+  const [cronLoading, setCronLoading] = useState(true);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -122,8 +124,35 @@ export default function KoalaHub() {
     };
 
     fetchLogs();
+    // Fetch cron jobs
+    const fetchCronJobs = async () => {
+      try {
+        setCronLoading(true);
+        const res = await fetch("/api/cron");
+        if (!res.ok) throw new Error("Failed to fetch cron");
+        const data = await res.json();
+        const jobs = (data.jobs || []).map((job: any, index: number) => ({
+          id: String(index + 1),
+          name: job.name,
+          schedule: job.schedule,
+          status: job.status === "running" ? "running" : "active",
+          lastRun: job.lastRun || "Never",
+          nextRun: job.nextRun || "N/A",
+        }));
+        setCronJobs(jobs.length > 0 ? jobs : mockCronJobs);
+      } catch {
+        setCronJobs(mockCronJobs);
+      } finally {
+        setCronLoading(false);
+      }
+    };
+    fetchCronJobs();
+    const cronInterval = setInterval(fetchCronJobs, 60000);
     const interval = setInterval(fetchLogs, 30000);
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      clearInterval(cronInterval);
+    };
   }, []);
 
   const formatTime = (timestamp: string) => {
@@ -140,7 +169,7 @@ export default function KoalaHub() {
     version: "2026.3.8",
     model: "MiniMax-M2.5",
     status: "online",
-    activeJobs: mockCronJobs.filter(j => j.status === "active" || j.status === "running").length,
+    activeJobs: cronJobs.filter(j => j.status === "active" || j.status === "running").length,
     totalTasks: 1284,
   };
 

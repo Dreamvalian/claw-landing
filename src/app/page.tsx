@@ -470,7 +470,7 @@ export default function KoalaHub() {
                 </div>
 
                 <div className="grid gap-4">
-                  {mockCronJobs.map((job) => (
+                  {cronJobs.map((job) => (
                     <div key={job.id} className="border border-zinc-800 bg-zinc-950 p-6 hover:border-zinc-700 transition-colors group">
                       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                         <div className="space-y-3">

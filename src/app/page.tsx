@@ -6,26 +6,29 @@ import {
   Activity, 
   Terminal, 
   Clock, 
-  Settings, 
   CheckCircle2, 
   AlertCircle, 
   Info,
-  Zap,
   Server,
   Calendar,
   ChevronRight,
   RefreshCw,
   Menu,
   X,
-  Home as HomeIcon,
-  Bot
+  LayoutDashboard,
+  Settings,
+  Bell,
+  Zap,
+  TrendingUp,
+  Shield,
+  Cpu
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Separator } from "@/components/ui/separator";
 
 interface LogEntry {
   timestamp: string;
@@ -46,56 +49,54 @@ interface CronJob {
 type View = "dashboard" | "logs" | "cronjobs";
 
 const defaultLogs: LogEntry[] = [
-  { timestamp: new Date().toISOString(), level: "info", message: "System initialized. Waiting for OpenClaw..." },
+  { timestamp: new Date().toISOString(), level: "info", message: "SYSTEM INITIALIZED. WAITING FOR OPENCLAW CONNECTION..." },
 ];
 
-const cronJobs: CronJob[] = [
-  { id: "1", name: "Daily Football Analysis", schedule: "0 17 * * *", status: "active", lastRun: "17:00", nextRun: "17:00" },
-  { id: "2", name: "Asian Handicap Scan", schedule: "*/6 * * *", status: "running", lastRun: "12:00", nextRun: "18:00" },
-  { id: "3", name: "Results Collector", schedule: "0 23 * * *", status: "active", lastRun: "23:00", nextRun: "23:00" },
+const mockCronJobs: CronJob[] = [
+  { id: "1", name: "DAILY FOOTBALL ANALYSIS", schedule: "0 17 * * *", status: "active", lastRun: "17:00", nextRun: "17:00" },
+  { id: "2", name: "ASIAN HANDICAP SCAN", schedule: "*/6 * * *", status: "running", lastRun: "12:00", nextRun: "18:00" },
+  { id: "3", name: "RESULTS COLLECTOR", schedule: "0 23 * * *", status: "active", lastRun: "23:00", nextRun: "23:00" },
 ];
 
 const getLogIcon = (level: string) => {
   switch (level) {
-    case "success": return <CheckCircle2 className="w-4 h-4 text-emerald-500" />;
-    case "error": return <AlertCircle className="w-4 h-4 text-rose-500" />;
-    case "warning": return <AlertCircle className="w-4 h-4 text-amber-500" />;
-    default: return <Info className="w-4 h-4 text-blue-500" />;
+    case "success": return <CheckCircle2 className="w-5 h-5 text-lime-400" />;
+    case "error": return <AlertCircle className="w-5 h-5 text-rose-500" />;
+    case "warning": return <AlertCircle className="w-5 h-5 text-amber-400" />;
+    default: return <Info className="w-5 h-5 text-cyan-400" />;
   }
 };
 
-const getLogBorder = (level: string) => {
+const getLogStyles = (level: string) => {
   switch (level) {
-    case "success": return "border-l-emerald-500";
-    case "error": return "border-l-rose-500";
-    case "warning": return "border-l-amber-500";
-    default: return "border-l-blue-500";
+    case "success": return "border-l-lime-400 bg-lime-400/5";
+    case "error": return "border-l-rose-500 bg-rose-500/5";
+    case "warning": return "border-l-amber-400 bg-amber-400/5";
+    default: return "border-l-cyan-400 bg-cyan-400/5";
   }
 };
 
 const getJobBadge = (status: string) => {
   switch (status) {
-    case "active": return <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-0">Active</Badge>;
-    case "running": return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-0 animate-pulse">Running</Badge>;
-    case "paused": return <Badge variant="secondary">Paused</Badge>;
-    case "error": return <Badge variant="destructive">Error</Badge>;
-    default: return <Badge variant="outline">Unknown</Badge>;
+    case "active": return <Badge className="bg-lime-400 text-black hover:bg-lime-400 font-bold tracking-wider text-[10px]">ACTIVE</Badge>;
+    case "running": return <Badge className="bg-cyan-400 text-black hover:bg-cyan-400 font-bold tracking-wider text-[10px] animate-pulse">RUNNING</Badge>;
+    case "paused": return <Badge variant="outline" className="border-zinc-600 text-zinc-400 font-bold tracking-wider text-[10px]">PAUSED</Badge>;
+    case "error": return <Badge className="bg-rose-500 text-white hover:bg-rose-500 font-bold tracking-wider text-[10px]">ERROR</Badge>;
+    default: return <Badge variant="outline" className="border-zinc-600 text-zinc-400 font-bold tracking-wider text-[10px]">UNKNOWN</Badge>;
   }
 };
 
-export default function Home() {
+export default function KoalaHub() {
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [logs, setLogs] = useState<LogEntry[]>(defaultLogs);
   const [logsLoading, setLogsLoading] = useState(true);
-  const [cronJobs, setCronJobs] = useState<CronJob[]>([]);
-  const [cronLoading, setCronLoading] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-      if (window.innerWidth < 768) setSidebarOpen(false);
+      setIsMobile(window.innerWidth < 1024);
+      if (window.innerWidth < 1024) setSidebarOpen(false);
     };
     checkMobile();
     window.addEventListener("resize", checkMobile);
@@ -125,37 +126,6 @@ export default function Home() {
     return () => clearInterval(interval);
   }, []);
 
-  // Fetch cron jobs
-  useEffect(() => {
-    const fetchCronJobs = async () => {
-      try {
-        setCronLoading(true);
-        const res = await fetch("/api/cron");
-        if (!res.ok) throw new Error("Failed to fetch cron");
-        const data = await res.json();
-        
-        const mappedJobs = (data.jobs || []).map((job: any, index: number) => ({
-          id: String(index + 1),
-          name: job.name,
-          schedule: job.schedule,
-          status: job.status === 'running' ? 'running' : 'idle',
-          lastRun: job.lastRun || 'Never',
-          nextRun: job.nextRun || 'N/A',
-        }));
-        
-        setCronJobs(mappedJobs);
-      } catch (err) {
-        console.error("Error fetching cron jobs:", err);
-      } finally {
-        setCronLoading(false);
-      }
-    };
-
-    fetchCronJobs();
-    const cronInterval = setInterval(fetchCronJobs, 60000);
-    return () => clearInterval(cronInterval);
-  }, []);
-
   const formatTime = (timestamp: string) => {
     try {
       const date = new Date(timestamp);
@@ -167,14 +137,11 @@ export default function Home() {
 
   const stats = {
     uptime: "24/7",
-    version: "2026.3.12",
+    version: "2026.3.8",
     model: "MiniMax-M2.5",
     status: "online",
-    tasksCompleted: 1284,
-    activeJobs: cronJobs.length,
-    gateway: "running",
-    hyperspace: "RUNNING",
-    disk: "16%",
+    activeJobs: mockCronJobs.filter(j => j.status === "active" || j.status === "running").length,
+    totalTasks: 1284,
   };
 
   const NavItem = ({ view, icon: Icon, label }: { view: View; icon: any; label: string }) => (
@@ -183,20 +150,28 @@ export default function Home() {
         setActiveView(view);
         if (isMobile) setSidebarOpen(false);
       }}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
+      className={`w-full flex items-center gap-4 px-6 py-4 transition-all duration-300 group border-l-2 ${
         activeView === view 
-          ? "bg-gradient-to-r from-violet-600 to-purple-600 text-white shadow-lg shadow-violet-200" 
-          : "hover:bg-gray-100 text-gray-600"
+          ? "border-lime-400 bg-lime-400/10 text-white" 
+          : "border-transparent text-zinc-500 hover:text-white hover:bg-white/5"
       }`}
     >
-      <Icon className={`w-5 h-5 ${activeView === view ? "text-white" : "text-gray-400 group-hover:text-gray-600"}`} />
-      <span className="font-medium">{label}</span>
-      {activeView === view && <ChevronRight className="w-4 h-4 ml-auto" />}
+      <Icon className={`w-5 h-5 ${activeView === view ? "text-lime-400" : "text-zinc-500 group-hover:text-zinc-300"}`} />
+      <span className="font-bold tracking-wider text-sm">{label}</span>
+      {activeView === view && <ChevronRight className="w-4 h-4 ml-auto text-lime-400" />}
     </button>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-black text-white font-mono flex selection:bg-lime-400 selection:text-black">
+      {/* Noise Overlay */}
+      <div 
+        className="fixed inset-0 pointer-events-none z-50 opacity-[0.03]"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+        }}
+      />
+
       {/* Mobile Overlay */}
       <AnimatePresence>
         {isMobile && sidebarOpen && (
@@ -205,7 +180,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 bg-black/50 z-40"
+            className="fixed inset-0 bg-black/80 z-40 backdrop-blur-sm"
           />
         )}
       </AnimatePresence>
@@ -213,76 +188,104 @@ export default function Home() {
       {/* Sidebar */}
       <motion.aside
         initial={false}
-        animate={{ width: sidebarOpen ? (isMobile ? 280 : 280) : 0 }}
-        className={`bg-white border-r border-gray-200 flex flex-col overflow-hidden ${isMobile ? "fixed h-full z-50" : "relative h-screen sticky top-0"}`}
+        animate={{ 
+          width: sidebarOpen ? 300 : 0,
+          x: sidebarOpen ? 0 : -300
+        }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        className="bg-zinc-950 border-r border-zinc-800 flex flex-col overflow-hidden fixed lg:relative h-screen z-50"
       >
-        <div className="p-6">
+        <div className="p-8 flex-1 overflow-y-auto">
           {/* Logo */}
-          <div className="flex items-center gap-3 mb-8">
-            <div className="w-12 h-12 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-violet-200">
-              <span className="text-2xl">🐨</span>
-            </div>
-            <div>
-              <h1 className="font-bold text-xl text-gray-900">Koala</h1>
-              <p className="text-xs text-gray-500">Assistance Hub</p>
+          <div className="mb-12">
+            <div className="flex items-center gap-3 mb-2">
+              <div className="w-10 h-10 bg-lime-400 flex items-center justify-center">
+                <span className="text-xl">🐨</span>
+              </div>
+              <div>
+                <h1 className="font-black text-2xl tracking-tighter text-white">KOALA</h1>
+                <p className="text-[10px] font-bold tracking-[0.3em] text-lime-400">ASSISTANCE HUB</p>
+              </div>
             </div>
           </div>
 
           {/* Navigation */}
-          <nav className="space-y-2">
-            <NavItem view="dashboard" icon={HomeIcon} label="Dashboard" />
-            <NavItem view="logs" icon={Terminal} label="System Logs" />
-            <NavItem view="cronjobs" icon={Calendar} label="Cron Jobs" />
+          <nav className="space-y-1 -mx-6">
+            <NavItem view="dashboard" icon={LayoutDashboard} label="DASHBOARD" />
+            <NavItem view="logs" icon={Terminal} label="SYSTEM LOGS" />
+            <NavItem view="cronjobs" icon={Calendar} label="CRON JOBS" />
           </nav>
+
+          <Separator className="my-8 bg-zinc-800" />
+
+          {/* Quick Stats */}
+          <div className="space-y-4">
+            <p className="text-[10px] font-bold tracking-[0.3em] text-zinc-500">QUICK STATS</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-zinc-900 border border-zinc-800 p-4">
+                <p className="text-3xl font-black text-lime-400">{stats.activeJobs}</p>
+                <p className="text-[10px] font-bold tracking-wider text-zinc-500 mt-1">ACTIVE JOBS</p>
+              </div>
+              <div className="bg-zinc-900 border border-zinc-800 p-4">
+                <p className="text-3xl font-black text-cyan-400">{stats.totalTasks}</p>
+                <p className="text-[10px] font-bold tracking-wider text-zinc-500 mt-1">TASKS DONE</p>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div className="mt-auto p-6 border-t border-gray-100">
-          <Card className="bg-gradient-to-br from-violet-50 to-purple-50 border-0">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-xs font-medium text-emerald-700">System Online</span>
-              </div>
-              <p className="text-xs text-gray-600">Claw AI Assistant v{stats.version}</p>
-            </CardContent>
-          </Card>
+        {/* Bottom Status */}
+        <div className="p-6 border-t border-zinc-800 bg-zinc-950">
+          <div className="flex items-center gap-4 px-4 py-4 bg-zinc-900 border border-zinc-800">
+            <div className="relative">
+              <div className="w-3 h-3 bg-lime-400 rounded-full" />
+              <div className="absolute inset-0 w-3 h-3 bg-lime-400 rounded-full animate-ping" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold tracking-wider text-white">SYSTEM ONLINE</p>
+              <p className="text-[10px] font-bold tracking-wider text-zinc-500">CLAW v{stats.version}</p>
+            </div>
+          </div>
         </div>
       </motion.aside>
 
       {/* Main Content */}
-      <main className="flex-1 min-w-0">
+      <main className="flex-1 min-w-0 flex flex-col bg-black">
         {/* Header */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4 sticky top-0 z-30">
+        <header className="border-b border-zinc-800 px-8 py-6 sticky top-0 z-30 bg-black/80 backdrop-blur-md">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-6">
               <Button 
                 variant="ghost" 
                 size="icon" 
                 onClick={() => setSidebarOpen(!sidebarOpen)}
-                className="lg:hidden"
+                className="lg:hidden text-white hover:bg-zinc-900"
               >
-                {sidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </Button>
+              
               <div>
-                <h2 className="text-xl font-semibold text-gray-900">
-                  {activeView === "dashboard" && "Dashboard"}
-                  {activeView === "logs" && "System Logs"}
-                  {activeView === "cronjobs" && "Cron Jobs"}
-                </h2>
-                <p className="text-sm text-gray-500">
-                  {new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
-                </p>
+                <div className="flex items-center gap-4">
+                  <h2 className="text-2xl font-black tracking-tighter text-white uppercase">
+                    {activeView === "dashboard" && "Dashboard"}
+                    {activeView === "logs" && "System Logs"}
+                    {activeView === "cronjobs" && "Cron Jobs"}
+                  </h2>
+                  <span className="text-[10px] font-bold tracking-[0.2em] text-zinc-500 border border-zinc-800 px-3 py-1 hidden sm:inline-block">
+                    {new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase()}
+                  </span>
+                </div>
               </div>
             </div>
             
             <div className="flex items-center gap-4">
-              <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full">
-                <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
-                <span className="text-sm font-medium text-emerald-700">Online</span>
-              </div>
-              <Avatar className="w-10 h-10 border-2 border-violet-100">
-                <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-white text-sm">
-                  KO
+              <Button variant="ghost" size="icon" className="relative text-zinc-400 hover:text-white hover:bg-zinc-900">
+                <Bell className="w-5 h-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-lime-400 rounded-full" />
+              </Button>
+              <Avatar className="w-10 h-10 border-2 border-zinc-800 bg-zinc-900">
+                <AvatarFallback className="bg-zinc-900 text-lime-400 font-black text-sm">
+                  K
                 </AvatarFallback>
               </Avatar>
             </div>
@@ -290,7 +293,7 @@ export default function Home() {
         </header>
 
         {/* Content Area */}
-        <div className="p-6">
+        <div className="flex-1 p-8 overflow-y-auto">
           <AnimatePresence mode="wait">
             {activeView === "dashboard" && (
               <motion.div
@@ -298,76 +301,68 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="space-y-6"
+                transition={{ duration: 0.3 }}
+                className="space-y-8 max-w-6xl mx-auto"
               >
-                {/* Welcome Card */}
-                <Card className="bg-gradient-to-r from-violet-600 to-purple-600 text-white border-0 overflow-hidden relative">
-                  <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2" />
-                  <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2" />
-                  <CardContent className="relative p-8">
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <Bot className="w-5 h-5 text-violet-200" />
-                          <span className="text-violet-100 text-sm font-medium">AI Assistant</span>
+                {/* Hero Banner */}
+                <div className="relative overflow-hidden border border-zinc-800 bg-zinc-950">
+                  <div className="absolute top-0 right-0 w-96 h-96 bg-lime-400/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3" />
+                  <div className="absolute bottom-0 left-0 w-64 h-64 bg-cyan-400/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/3" />
+                  <div className="relative p-10 md:p-16">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-2 h-2 bg-lime-400 rounded-full animate-pulse" />
+                          <span className="text-xs font-bold tracking-[0.3em] text-lime-400">AI ASSISTANT ACTIVE</span>
                         </div>
-                        <h3 className="text-3xl font-bold">Welcome back, Koala</h3>
-                        <p className="text-violet-100 max-w-md">
-                          Your AI assistant is running smoothly. All systems operational and ready to help.
+                        <h3 className="text-5xl md:text-7xl font-black tracking-tighter text-white uppercase leading-none">
+                          Koala<br />
+                          <span className="text-lime-400">Hub</span>
+                        </h3>
+                        <p className="text-zinc-400 max-w-lg text-lg font-medium">
+                          Your intelligent assistance platform. Monitor system health, track tasks, and manage automated workflows.
                         </p>
                       </div>
-                      <div className="hidden sm:block text-right">
-                        <div className="text-5xl font-bold">🦦</div>
-                      </div>
+                      <div className="hidden md:block text-8xl">🦦</div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   {[
-                    { label: "Uptime", value: stats.uptime, icon: Activity, color: "text-emerald-600", bg: "bg-emerald-50" },
-                    { label: "Version", value: stats.version, icon: Settings, color: "text-blue-600", bg: "bg-blue-50" },
-                    { label: "Model", value: stats.model, icon: Zap, color: "text-violet-600", bg: "bg-violet-50" },
-                    { label: "Active Jobs", value: stats.activeJobs.toString(), icon: Server, color: "text-amber-600", bg: "bg-amber-50" },
+                    { label: "UPTIME", value: stats.uptime, icon: Activity, color: "text-lime-400", border: "border-lime-400/20" },
+                    { label: "VERSION", value: stats.version, icon: Settings, color: "text-cyan-400", border: "border-cyan-400/20" },
+                    { label: "AI MODEL", value: stats.model, icon: Cpu, color: "text-violet-400", border: "border-violet-400/20" },
+                    { label: "ACTIVE JOBS", value: stats.activeJobs.toString(), icon: TrendingUp, color: "text-amber-400", border: "border-amber-400/20" },
                   ].map((stat, i) => (
-                    <Card key={i} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-gray-500">{stat.label}</p>
-                            <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
-                          </div>
-                          <div className={`w-12 h-12 ${stat.bg} rounded-xl flex items-center justify-center`}>
-                            <stat.icon className={`w-6 h-6 ${stat.color}`} />
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
+                    <div key={i} className={`bg-zinc-950 border ${stat.border} p-6 hover:bg-zinc-900/50 transition-colors group`}>
+                      <div className="flex items-start justify-between mb-4">
+                        <stat.icon className={`w-6 h-6 ${stat.color}`} />
+                      </div>
+                      <p className="text-[10px] font-bold tracking-[0.2em] text-zinc-500 mb-2">{stat.label}</p>
+                      <p className={`text-2xl font-black ${stat.color}`}>{stat.value}</p>
+                    </div>
                   ))}
                 </div>
 
                 {/* About Section */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Bot className="w-5 h-5 text-violet-600" />
-                      About Claw
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <p className="text-gray-600 leading-relaxed">
-                      <strong>Claw</strong> is your dedicated AI assistant built on OpenClaw. 
-                      Designed to handle tasks autonomously, maintain security, and operate 
-                      24/7 without interruption. Powered by <span className="text-violet-600 font-medium">MiniMax-M2.5</span>.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge variant="secondary" className="bg-violet-50 text-violet-700">Autonomous</Badge>
-                      <Badge variant="secondary" className="bg-emerald-50 text-emerald-700">Secure</Badge>
-                      <Badge variant="secondary" className="bg-blue-50 text-blue-700">24/7 Operation</Badge>
-                    </div>
-                  </CardContent>
-                </Card>
+                <div className="border border-zinc-800 bg-zinc-950 p-8">
+                  <div className="flex items-center gap-3 mb-6">
+                    <Zap className="w-6 h-6 text-lime-400" />
+                    <h3 className="text-xl font-black tracking-tighter text-white uppercase">About Claw</h3>
+                  </div>
+                  <p className="text-zinc-400 text-lg leading-relaxed mb-6">
+                    <span className="text-white font-bold">Claw</span> is an autonomous AI agent built on OpenClaw, 
+                    designed to handle complex tasks, maintain security protocols, and operate continuously 
+                    without interruption. Powered by <span className="text-lime-400 font-bold">MiniMax-M2.5</span>.
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <Badge className="bg-lime-400/10 text-lime-400 border-lime-400/20 hover:bg-lime-400/10 font-bold tracking-wider text-[10px] px-4 py-2">AUTONOMOUS</Badge>
+                    <Badge className="bg-cyan-400/10 text-cyan-400 border-cyan-400/20 hover:bg-cyan-400/10 font-bold tracking-wider text-[10px] px-4 py-2">SECURE</Badge>
+                    <Badge className="bg-violet-400/10 text-violet-400 border-violet-400/20 hover:bg-violet-400/10 font-bold tracking-wider text-[10px] px-4 py-2">24/7 OPERATION</Badge>
+                  </div>
+                </div>
               </motion.div>
             )}
 
@@ -377,52 +372,55 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="space-y-4"
+                transition={{ duration: 0.3 }}
+                className="space-y-6 max-w-6xl mx-auto"
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex gap-4">
-                    <div className="text-sm">
-                      <span className="text-gray-500">Info:</span>{" "}
-                      <span className="font-medium text-gray-900">{logs.filter(l => l.level === "info").length}</span>
+                {/* Log Stats */}
+                <div className="flex flex-wrap items-center justify-between gap-4 border border-zinc-800 bg-zinc-950 p-6">
+                  <div className="flex gap-8">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-cyan-400 rounded-full" />
+                      <span className="text-sm font-bold tracking-wider text-zinc-400">INFO: <span className="text-white">{logs.filter(l => l.level === "info").length}</span></span>
                     </div>
-                    <div className="text-sm">
-                      <span className="text-gray-500">Warnings:</span>{" "}
-                      <span className="font-medium text-amber-600">{logs.filter(l => l.level === "warning").length}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-amber-400 rounded-full" />
+                      <span className="text-sm font-bold tracking-wider text-zinc-400">WARNINGS: <span className="text-white">{logs.filter(l => l.level === "warning").length}</span></span>
                     </div>
-                    <div className="text-sm">
-                      <span className="text-gray-500">Errors:</span>{" "}
-                      <span className="font-medium text-rose-600">{logs.filter(l => l.level === "error").length}</span>
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 bg-rose-500 rounded-full" />
+                      <span className="text-sm font-bold tracking-wider text-zinc-400">ERRORS: <span className="text-white">{logs.filter(l => l.level === "error").length}</span></span>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => window.location.reload()}>
+                  <Button variant="outline" onClick={() => window.location.reload()} className="border-zinc-700 text-zinc-300 hover:bg-zinc-900 hover:text-white font-bold tracking-wider text-xs">
                     <RefreshCw className="w-4 h-4 mr-2" />
-                    Refresh
+                    REFRESH
                   </Button>
                 </div>
 
-                <Card>
-                  <ScrollArea className="h-[500px]">
-                    <div className="p-4 space-y-2">
+                {/* Logs List */}
+                <div className="border border-zinc-800 bg-zinc-950">
+                  <ScrollArea className="h-[600px]">
+                    <div className="p-6 space-y-3">
                       {logsLoading && (
-                        <div className="text-center py-8 text-gray-500">Loading logs...</div>
+                        <div className="text-center py-12 text-zinc-500 font-bold tracking-wider">LOADING LOGS...</div>
                       )}
                       {logs.map((log, i) => (
                         <div
                           key={i}
-                          className={`flex items-start gap-3 p-3 rounded-lg bg-white border border-gray-100 border-l-4 ${getLogBorder(log.level)} hover:shadow-sm transition-shadow`}
+                          className={`flex items-start gap-4 p-5 border-l-2 ${getLogStyles(log.level)} bg-zinc-900/30 hover:bg-zinc-900/50 transition-colors`}
                         >
-                          {getLogIcon(log.level)}
+                          <div className="mt-0.5">{getLogIcon(log.level)}</div>
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <span className="text-xs font-mono text-gray-400">{formatTime(log.timestamp)}</span>
+                            <div className="flex items-center gap-3 mb-2">
+                              <span className="text-xs font-mono text-zinc-500 bg-zinc-950 px-2 py-1 border border-zinc-800">{formatTime(log.timestamp)}</span>
                             </div>
-                            <p className="text-sm text-gray-700">{log.message}</p>
+                            <p className="text-sm text-zinc-300 font-medium uppercase tracking-wide">{log.message}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   </ScrollArea>
-                </Card>
+                </div>
               </motion.div>
             )}
 
@@ -432,34 +430,47 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -20 }}
-                className="space-y-4"
+                transition={{ duration: 0.3 }}
+                className="space-y-6 max-w-6xl mx-auto"
               >
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-500">
-                    <span className="font-medium text-gray-900">{stats.activeJobs}</span> active scheduled tasks
+                <div className="flex items-center justify-between border border-zinc-800 bg-zinc-950 p-6">
+                  <p className="text-sm font-bold tracking-wider text-zinc-400">
+                    <span className="text-white text-2xl mr-2">{stats.activeJobs}</span> 
+                    SCHEDULED TASKS RUNNING
                   </p>
                 </div>
 
                 <div className="grid gap-4">
-                  {cronJobs.map((job) => (
-                    <Card key={job.id} className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-6">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-3">
-                              <h3 className="font-semibold text-gray-900">{job.name}</h3>
-                              {getJobBadge(job.status)}
-                            </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-500">
-                              <span className="font-mono bg-gray-100 px-2 py-0.5 rounded">{job.schedule}</span>
-                              <span>Last: {job.lastRun}</span>
-                              <span>Next: {job.nextRun}</span>
-                            </div>
+                  {mockCronJobs.map((job) => (
+                    <div key={job.id} className="border border-zinc-800 bg-zinc-950 p-6 hover:border-zinc-700 transition-colors group">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-4">
+                            <h3 className="text-lg font-black tracking-tighter text-white uppercase">{job.name}</h3>
+                            {getJobBadge(job.status)}
                           </div>
-                          <Clock className="w-5 h-5 text-gray-400" />
+                          <div className="flex flex-wrap items-center gap-6 text-sm">
+                            <span className="font-mono text-lime-400 bg-lime-400/10 px-3 py-1.5 border border-lime-400/20 text-xs font-bold">{job.schedule}</span>
+                            <span className="flex items-center gap-2 text-zinc-400 font-medium">
+                              <Clock className="w-4 h-4" />
+                              LAST: <span className="text-white">{job.lastRun}</span>
+                            </span>
+                            <span className="flex items-center gap-2 text-zinc-400 font-medium">
+                              <Calendar className="w-4 h-4" />
+                              NEXT: <span className="text-white">{job.nextRun}</span>
+                            </span>
+                          </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                        <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="outline" size="sm" className="border-zinc-700 text-zinc-400 hover:bg-zinc-900 hover:text-white font-bold tracking-wider text-xs">
+                            EDIT
+                          </Button>
+                          <Button variant="outline" size="sm" className="border-zinc-700 text-zinc-400 hover:bg-zinc-900 hover:text-white font-bold tracking-wider text-xs">
+                            LOGS
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
                   ))}
                 </div>
               </motion.div>

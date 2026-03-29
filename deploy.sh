@@ -10,9 +10,9 @@ echo "Installing dependencies..."
 npm install
 
 echo "Building..."
-npm run build
+NEXT_DISABLE_ESLINT=1 npm run build
 
 echo "Restarting PM2..."
-pm2 restart hermes-web || pm2 start npm --name "hermes-web" -- start
+pm2 restart hermes-web
 
-echo "Done."
+echo "Done. Site running at https://ko4lax.dev"

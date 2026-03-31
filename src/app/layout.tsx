@@ -2,11 +2,10 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Navbar } from "@/components/landing/navbar"
-import { Footer } from "@/components/landing/footer"
-
 export const metadata: Metadata = {
   title: "Hermes — AI Discord Assistant",
   description: "24/7 AI-powered Discord assistant for automation, tasks, and information retrieval.",
+  icons: { icon: "/favicon.ico" },
 }
 
 export default function RootLayout({
@@ -25,7 +24,6 @@ export default function RootLayout({
         >
           <Navbar />
           <main>{children}</main>
-          <Footer />
         </ThemeProvider>
       </body>
     </html>

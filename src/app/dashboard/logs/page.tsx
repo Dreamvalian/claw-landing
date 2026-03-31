@@ -28,7 +28,7 @@ export default function LogsPage() {
       if (filter === "today") params.set("filter", "today")
       else if (filter === "week") params.set("filter", "week")
 
-      const res = await fetch(`/api/logs?${params}`)
+      const res = await fetch(`/api/system-logs?${params}`)
       if (res.ok) {
         const data = await res.json()
         setLogs(data.logs ?? [])
@@ -42,11 +42,13 @@ export default function LogsPage() {
     fetchLogs()
   }, [filter])
 
-  const filteredLogs = logs.filter(
-    (log) =>
-      log.command.toLowerCase().includes(search.toLowerCase()) ||
-      log.response.toLowerCase().includes(search.toLowerCase())
-  )
+  const filteredLogs = logs.filter((log) => {
+    const q = search.toLowerCase()
+    const cmd = (log.command ?? "").toLowerCase()
+    const resp = (log.response ?? "").toLowerCase()
+    const msg = (log.message ?? "").toLowerCase()
+    return cmd.includes(q) || resp.includes(q) || msg.includes(q)
+  })
 
   return (
     <div className="space-y-6">

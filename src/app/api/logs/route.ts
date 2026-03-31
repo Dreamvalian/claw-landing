@@ -51,6 +51,9 @@ export async function POST(req: NextRequest) {
     await redis.incr("hermes:metrics:commands_today")
     await redis.set("hermes:metrics:last_active", Date.now().toString())
 
+    // Publish to Redis so SSE subscribers get instant updates
+    await redis.publish("hermes:logs:changed", JSON.stringify(entry))
+
     return NextResponse.json({ ok: true, id: entry.id })
   } catch {
     return NextResponse.json({ error: "failed" }, { status: 500 })

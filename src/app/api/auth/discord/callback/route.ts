@@ -7,14 +7,16 @@ export async function GET(req: NextRequest) {
   const code = searchParams.get("code")
   const error = searchParams.get("error")
 
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://ko4lax.dev"
+
   if (error || !code) {
-    return NextResponse.redirect(new URL("/?auth_error=1", req.url))
+    return NextResponse.redirect(new URL("/?auth_error=1", baseUrl))
   }
 
   const session = await exchangeCode(code)
 
   if (!session) {
-    return NextResponse.redirect(new URL("/?auth_error=1", req.url))
+    return NextResponse.redirect(new URL("/?auth_error=1", baseUrl))
   }
 
   const cookieStore = await cookies()
@@ -26,5 +28,5 @@ export async function GET(req: NextRequest) {
     path: "/",
   })
 
-  return NextResponse.redirect(new URL("/dashboard", req.url))
+  return NextResponse.redirect(new URL("/dashboard", baseUrl))
 }

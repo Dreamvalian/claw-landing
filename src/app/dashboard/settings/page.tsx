@@ -5,8 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Badge } from "@/components/ui/badge"
-import { Moon, Sun, Bell, Key, User } from "lucide-react"
+import { Moon, Sun, Bell, Key } from "lucide-react"
 import { useTheme } from "next-themes"
+import { Toggle } from "@/components/ui/toggle"
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
@@ -68,26 +69,12 @@ export default function SettingsPage() {
           <CardDescription>Control how Hermes notifies you</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-medium">Command notifications</p>
-              <p className="text-sm text-neutral-500">
-                Get notified when commands finish executing
-              </p>
-            </div>
-            <button
-              onClick={() => setNotifications(!notifications)}
-              className={`relative h-6 w-11 rounded-full transition-colors ${
-                notifications ? "bg-neutral-900 dark:bg-neutral-50" : "bg-neutral-300 dark:bg-neutral-700"
-              }`}
-            >
-              <span
-                className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                  notifications ? "translate-x-5" : "translate-x-0.5"
-                }`}
-              />
-            </button>
-          </div>
+          <Toggle
+            checked={notifications}
+            onChange={setNotifications}
+            label="Command notifications"
+            description="Get notified when commands finish executing"
+          />
         </CardContent>
       </Card>
 

@@ -2,15 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Terminal, Server, FileCode, Settings, LogOut } from "lucide-react"
+import { LayoutDashboard, Terminal, Settings, LogOut } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { signOut } from "@/lib/actions"
 
 const navItems = [
   { href: "/dashboard", label: "Command Center", icon: LayoutDashboard },
-  { href: "/dashboard/servers", label: "Servers", icon: Server },
-  { href: "/dashboard/logs", label: "Command Log", icon: Terminal },
-  { href: "/dashboard/prompts", label: "Custom Prompts", icon: FileCode },
+  { href: "/dashboard/logs", label: "System Logs", icon: Terminal },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ]
 

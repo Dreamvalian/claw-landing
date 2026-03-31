@@ -10,6 +10,11 @@ const nextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  experimental: {
+    cpus: 2,
+    optimizeCss: false,
+  },
+  swcMinify: false,
 };
 
 export default nextConfig;

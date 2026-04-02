@@ -21,10 +21,13 @@ export default async function DashboardLayout({
 
   return (
     <div className="flex h-screen overflow-hidden bg-white dark:bg-neutral-950">
-      <DashboardSidebar />
+      {/* Desktop sidebar */}
+      <div className="hidden md:block">
+        <DashboardSidebar />
+      </div>
       <div className="flex flex-1 flex-col overflow-hidden">
         <DashboardHeader user={session.user} />
-        <main className="flex-1 overflow-y-auto p-6">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 md:p-6">{children}</main>
       </div>
     </div>
   )

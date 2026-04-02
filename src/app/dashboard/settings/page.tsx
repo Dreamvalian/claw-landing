@@ -32,7 +32,7 @@ export default function SettingsPage() {
           <CardDescription>Customize how Hermes looks</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-medium">Theme</p>
               <p className="text-sm text-neutral-500">Choose light or dark mode</p>
@@ -88,7 +88,7 @@ export default function SettingsPage() {
           <CardDescription>Manage your API credentials</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-medium">OpenAI / Anthropic</p>
               <p className="text-sm text-neutral-500">Configure your AI provider</p>
@@ -98,7 +98,7 @@ export default function SettingsPage() {
             </Button>
           </div>
           <Separator />
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-medium">Redis</p>
               <p className="text-sm text-neutral-500">Connected at localhost:6379</p>
@@ -117,7 +117,7 @@ export default function SettingsPage() {
           <CardDescription>Irreversible actions</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <p className="font-medium">Clear all logs</p>
               <p className="text-sm text-neutral-500">

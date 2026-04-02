@@ -36,7 +36,7 @@ export function HowItWorks() {
             Up and running in minutes
           </h2>
         </div>
-        <div className="mt-12 flex flex-col gap-8 md:flex-row">
+        <div className="mt-12 grid gap-8 md:grid-cols-3 md:gap-6">
           {steps.map((step, index) => (
             <motion.div
               key={step.number}
@@ -44,7 +44,7 @@ export function HowItWorks() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.15, duration: 0.4 }}
-              className="flex flex-1 flex-col items-center text-center"
+              className="relative flex flex-col items-center text-center"
             >
               <div className="flex h-16 w-16 items-center justify-center rounded-full border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950">
                 <step.icon className="h-6 w-6 text-neutral-600 dark:text-neutral-400" />
@@ -56,9 +56,6 @@ export function HowItWorks() {
               <p className="mt-2 text-sm text-neutral-500 dark:text-neutral-400">
                 {step.description}
               </p>
-              {index < steps.length - 1 && (
-                <div className="mt-8 hidden h-px w-full bg-neutral-200 dark:bg-neutral-800 md:block" />
-              )}
             </motion.div>
           ))}
         </div>

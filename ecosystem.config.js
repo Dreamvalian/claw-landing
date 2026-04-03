@@ -13,6 +13,7 @@ module.exports = {
         REDIS_HOST: "localhost",
         REDIS_PORT: "6379",
         NEXT_PUBLIC_BASE_URL: "https://ko4lax.dev",
+        NEXT_PUBLIC_DASHBOARD_URL: "https://dashboard.ko4lax.dev",
         DEPLOY_WEBHOOK_SECRET: "hermes_deploy_secret_change_me",
       },
     },

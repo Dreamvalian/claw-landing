@@ -1,29 +1,29 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Plus, Settings, Check } from "lucide-react"
+import { MessageCircle, UserPlus, Sparkles } from "lucide-react"
 
 const steps = [
   {
     number: "01",
-    title: "Invite the Bot",
+    title: "Say Hello",
     description:
-      "Add Hermes to your Discord server with a single click. Takes under a minute.",
-    icon: Plus,
+      "Drop into Koala's Discord and ping Onyx. No invite needed — Onyx is already there.",
+    icon: MessageCircle,
   },
   {
     number: "02",
-    title: "Configure",
+    title: "Get Assistance",
     description:
-      "Set up your preferences, connect your tools, and teach Hermes how you work.",
-    icon: Settings,
+      "Ask questions, kick off automations, delegate research or coding tasks.",
+    icon: UserPlus,
   },
   {
     number: "03",
-    title: "Done",
+    title: "Watch it Work",
     description:
-      "Start chatting. Hermes handles the rest — from questions to complex automations.",
-    icon: Check,
+      "Onyx runs tasks, reports back, and keeps the conversation going.",
+    icon: Sparkles,
   },
 ]
 
@@ -33,7 +33,7 @@ export function HowItWorks() {
       <div className="mx-auto max-w-5xl px-4">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Up and running in minutes
+            How to talk to Onyx
           </h2>
         </div>
         <div className="mt-12 grid gap-8 md:grid-cols-3 md:gap-6">

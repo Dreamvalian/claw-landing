@@ -1,14 +1,14 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { MessageSquare, Zap, Shield, Code2 } from "lucide-react"
+import { MessageSquare, Zap, Shield, Sparkles } from "lucide-react"
 
 const features = [
   {
     icon: MessageSquare,
-    title: "Natural Language Commands",
+    title: "Natural Language",
     description:
-      "Talk to Hermes like a teammate. No special syntax or command prefixes to remember.",
+      "Talk to Onyx like a teammate. No special syntax or command prefixes to remember.",
   },
   {
     icon: Zap,
@@ -23,10 +23,10 @@ const features = [
       "Runs on your own VPS. Your data never touches third-party servers.",
   },
   {
-    icon: Code2,
-    title: "Custom Automations",
+    icon: Sparkles,
+    title: "Original Character",
     description:
-      "Build prompt templates and automation workflows tailored to your needs.",
+      "Onyx is Koala's OC — built with personality, not a generic AI wrapper.",
   },
 ]
 
@@ -36,10 +36,11 @@ export function Features() {
       <div className="mx-auto max-w-5xl px-4">
         <div className="text-center">
           <h2 className="text-3xl font-bold tracking-tight md:text-4xl">
-            Built for how you actually work
+            More than a bot
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-neutral-500 dark:text-neutral-400">
-            Simple enough for casual use, powerful enough for serious automation.
+            Onyx is an original character with a distinct voice and work style.
+            Built to be useful, not just impressive.
           </p>
         </div>
         <motion.div

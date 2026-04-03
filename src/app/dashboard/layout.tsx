@@ -5,8 +5,10 @@ import { DashboardSidebar } from "@/components/dashboard/sidebar"
 import { DashboardHeader } from "@/components/dashboard/header"
 
 export const metadata: Metadata = {
-  title: "Dashboard — Hermes",
+  title: "Dashboard — Onyx",
 }
+
+const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL ?? "https://ko4lax.dev"
 
 export default async function DashboardLayout({
   children,
@@ -16,7 +18,7 @@ export default async function DashboardLayout({
   const session = await getServerSession()
 
   if (!session) {
-    redirect("/api/auth/discord")
+    redirect(`${BASE_URL}/api/auth/discord`)
   }
 
   return (

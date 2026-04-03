@@ -3,8 +3,8 @@ import "./globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Navbar } from "@/components/landing/navbar"
 export const metadata: Metadata = {
-  title: "Hermes — AI Discord Assistant",
-  description: "24/7 AI-powered Discord assistant for automation, tasks, and information retrieval.",
+  title: "Onyx — Koala's AI Assistant",
+  description: "Onyx is Koala's 24/7 AI assistant and original character. Terse. Direct. Always online.",
   icons: { icon: "/favicon.ico" },
 }
 export const viewport: Viewport = {

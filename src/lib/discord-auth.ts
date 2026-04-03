@@ -1,5 +1,4 @@
 import { cookies } from "next/headers"
-import { redirect } from "next/navigation"
 import { NextRequest } from "next/server"
 
 const DISCORD_API = "https://discord.com/api/v10"
@@ -31,7 +30,6 @@ export async function getServerSession(): Promise<Session | null> {
   try {
     const session = JSON.parse(sessionCookie.value) as Session
     if (session.expires_at < Date.now()) {
-      // Refresh token
       const refreshed = await refreshAccessToken(session.refresh_token)
       if (!refreshed) return null
       return refreshed

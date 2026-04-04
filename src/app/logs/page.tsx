@@ -126,7 +126,7 @@ export default function LogsPage() {
                     )}
                   </div>
                   <p className="shrink-0 text-xs text-neutral-400">
-                    {new Date(log.timestamp).toLocaleString()}
+                    {new Date(log.timestamp).toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })}
                   </p>
                 </div>
               ))}

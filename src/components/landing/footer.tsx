@@ -25,7 +25,7 @@ export function Footer() {
               <Link href="/contact" className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50">
                 Contact
               </Link>
-              <Link href="/dashboard" className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50">
+              <Link href="https://dashboard.ko4lax.dev" className="text-sm text-neutral-500 hover:text-neutral-900 dark:hover:text-neutral-50">
                 Dashboard
               </Link>
             </div>

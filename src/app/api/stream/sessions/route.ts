@@ -23,6 +23,53 @@ interface SessionData {
   total_tokens: number
 }
 
+function getCronSessionsFromFiles(sessionsDir: string): SessionData[] {
+  const now = Date.now()
+  const cronSessions: SessionData[] = []
+  try {
+    const files = require("fs").readdirSync(sessionsDir)
+    // newest per job_id
+    const newestByJob: Record<string, { file: string; mtimeMs: number }> = {}
+    for (const file of files) {
+      if (!file.startsWith("session_cron_") || !file.endsWith(".json")) continue
+      // session_cron_{job_id}_{timestamp}.json
+      const parts = file.replace(/^session_cron_/, "").replace(/\.json$/, "")
+      const lastSep = parts.lastIndexOf("_")
+      const jobId = parts.slice(0, lastSep)
+      const mtimeMs = require("fs").statSync(join(sessionsDir, file)).mtimeMs
+      if (!newestByJob[jobId] || mtimeMs > newestByJob[jobId].mtimeMs) {
+        newestByJob[jobId] = { file, mtimeMs }
+      }
+    }
+    for (const [, { file }] of Object.entries(newestByJob)) {
+      try {
+        const content = require("fs").readFileSync(join(sessionsDir, file), "utf8")
+        const c: Record<string, unknown> = JSON.parse(content)
+        const updatedAt = new Date((c.last_updated as string) ?? (c.session_start as string)).getTime()
+        const ageMinutes = Math.floor((now - updatedAt) / 60000)
+        cronSessions.push({
+          session_key: `cron:${c.session_id as string}`,
+          session_id: c.session_id as string,
+          display_name: `Cron: ${(c.session_id as string).split("_")[1] ?? "unknown"}`,
+          platform: "cron",
+          chat_type: "cron",
+          user_name: "—",
+          chat_id: "—",
+          created_at: c.session_start as string,
+          updated_at: c.last_updated as string ?? c.session_start as string,
+          age_minutes: ageMinutes,
+          is_cron: true,
+          is_current: false,
+          input_tokens: 0,
+          output_tokens: 0,
+          total_tokens: 0,
+        })
+      } catch { /* skip bad files */ }
+    }
+  } catch { /* ignore dir errors */ }
+  return cronSessions
+}
+
 function getSessionsFromDisk(): { active: SessionData[]; cron: SessionData[] } {
   const sessionsPath = join(process.env.HERMES_HOME ?? "/root/.hermes", "sessions/sessions.json")
   const sessionsDir = join(process.env.HERMES_HOME ?? "/root/.hermes", "sessions")
@@ -32,7 +79,7 @@ function getSessionsFromDisk(): { active: SessionData[]; cron: SessionData[] } {
     const content = require("fs").readFileSync(sessionsPath, "utf8")
     sessions = JSON.parse(content)
   } catch {
-    return { active: [], cron: [] }
+    return { active: [], cron: getCronSessionsFromFiles(sessionsDir) }
   }
 
   const now = Date.now()
@@ -73,6 +120,12 @@ function getSessionsFromDisk(): { active: SessionData[]; cron: SessionData[] } {
     .filter((s) => !s.is_cron)
     .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
 
+  // Also scan session_cron_*.json files
+  const cronFromFiles = getCronSessionsFromFiles(sessionsDir)
+  const allCron = [...cronSessions, ...cronFromFiles]
+    .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime())
+    .slice(0, 10)
+
   // Mark current sessions: .jsonl file was updated in the last 5 minutes
   const currentSessions = new Set<string>()
   try {
@@ -105,7 +158,7 @@ function getSessionsFromDisk(): { active: SessionData[]; cron: SessionData[] } {
     is_current: currentSessions.has(s.session_key),
   }))
 
-  return { active: finalActive, cron: cronSessions }
+  return { active: finalActive, cron: allCron }
 }
 
 export async function GET() {

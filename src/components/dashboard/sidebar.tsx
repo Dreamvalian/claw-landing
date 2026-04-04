@@ -7,9 +7,9 @@ import { cn } from "@/lib/utils"
 import { signOut } from "@/lib/actions"
 
 const navItems = [
-  { href: "/dashboard", label: "Command Center", icon: LayoutDashboard },
-  { href: "/dashboard/logs", label: "System Logs", icon: Terminal },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
+  { href: "/", label: "Command Center", icon: LayoutDashboard },
+  { href: "/logs", label: "System Logs", icon: Terminal },
+  { href: "/settings", label: "Settings", icon: Settings },
 ]
 
 export function DashboardSidebar() {

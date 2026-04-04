@@ -36,7 +36,7 @@ export async function GET() {
       if (bracketIdx > 0) {
         const id = trimmed.slice(0, bracketIdx)
         const statusPart = trimmed.slice(bracketIdx + 2, -1)
-        if (/^[0-9a-f]{7,8}$/.test(id) && (statusPart === "active" || statusPart === "paused")) {
+        if (/^[0-9a-f]{10,12}$/.test(id) && (statusPart === "active" || statusPart === "paused")) {
           const _matched = true
           const enabled = statusPart === "active"
           i++
@@ -47,7 +47,7 @@ export async function GET() {
             if (l === "") break
             // Check if next job
             const bi = l.lastIndexOf(" [")
-            if (bi > 0 && /^[0-9a-f]{7,8}$/.test(l.slice(0, bi))) break
+            if (bi > 0 && /^[0-9a-f]{10,12}$/.test(l.slice(0, bi))) break
             if (l.startsWith("Name:")) fields["Name:"] = l.slice(5).trim()
             else if (l.startsWith("Schedule:")) fields["Schedule:"] = l.slice(9).trim()
             else if (l.startsWith("Repeat:")) fields["Repeat:"] = l.slice(7).trim()

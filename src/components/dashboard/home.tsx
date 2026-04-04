@@ -63,11 +63,10 @@ interface ActiveSession {
 
 interface SystemLog {
   id: string
-  command?: string
-  response?: string
+  level?: string
+  source?: string
   message?: string
   timestamp: string
-  server?: string
   _index: number
 }
 
@@ -98,7 +97,7 @@ function timeAgo(ts: string): string {
   return `${Math.floor(h / 24)}d ago`
 }
 
-export default function DashboardPage() {
+export default function DashboardHome() {
   const [data, setData] = useState<HermesData | null>(null)
   const [sessions, setSessions] = useState<{ active: ActiveSession[]; cron: ActiveSession[] } | null>(null)
   const [logs, setLogs] = useState<SystemLog[]>([])
@@ -107,20 +106,21 @@ export default function DashboardPage() {
   const [logFilter, setLogFilter] = useState<"all" | "today" | "hour">("all")
   const [logSearch, setLogSearch] = useState("")
   const [connected, setConnected] = useState({ hermes: false, sessions: false, logs: false })
+  const [mcpServers, setMcpServers] = useState<{ name: string; status: string; transport: string }[]>([])
 
   // SSE event sources
   const hermesES = useRef<EventSource | null>(null)
   const sessionsES = useRef<EventSource | null>(null)
-  const logsES = useRef<EventSource | null>(null)
+  const logsPoll = useRef<ReturnType<typeof setInterval> | null>(null)
 
   // Cleanup all EventSources
   const cleanup = useCallback(() => {
     hermesES.current?.close()
     sessionsES.current?.close()
-    logsES.current?.close()
+    logsPoll.current && clearInterval(logsPoll.current)
     hermesES.current = null
     sessionsES.current = null
-    logsES.current = null
+    logsPoll.current = null
   }, [])
 
   // Connect SSE for hermes data
@@ -191,34 +191,43 @@ export default function DashboardPage() {
     return () => es.close()
   }, [])
 
-  // Connect SSE for logs
+  // Poll logs every 5s
   useEffect(() => {
-    if (logsES.current) logsES.current.close()
-
-    const es = new EventSource("/api/stream/logs")
-    logsES.current = es
-
-    es.onopen = () => setConnected((c) => ({ ...c, logs: true }))
-
-    es.onmessage = (e) => {
+    async function fetchLogs() {
       try {
-        const payload = JSON.parse(e.data)
+        const res = await fetch("/api/stream/logs")
+        if (!res.ok) throw new Error("fetch failed")
+        const payload = await res.json()
         if (payload.type === "logs") {
           setLogs(payload.logs ?? [])
-        } else if (payload.type === "log_entry") {
-          // Prepend new entry
-          setLogs((prev) => [payload.entry, ...prev.slice(0, 49)])
+          setConnected((c) => ({ ...c, logs: true }))
         }
       } catch {
-        // ignore
+        setConnected((c) => ({ ...c, logs: false }))
       }
     }
 
-    es.onerror = () => {
-      setConnected((c) => ({ ...c, logs: false }))
+    fetchLogs()
+    logsPoll.current = setInterval(fetchLogs, 5000)
+    return () => {
+      if (logsPoll.current) clearInterval(logsPoll.current)
     }
+  }, [])
 
-    return () => es.close()
+  // Fetch MCP servers
+  useEffect(() => {
+    async function fetchMcp() {
+      try {
+        const res = await fetch("/api/mcp")
+        if (res.ok) {
+          const d = await res.json()
+          setMcpServers(d.servers ?? [])
+        }
+      } catch { /* ignore */ }
+    }
+    fetchMcp()
+    const interval = setInterval(fetchMcp, 30000)
+    return () => clearInterval(interval)
   }, [])
 
   // Cleanup on unmount
@@ -429,7 +438,7 @@ export default function DashboardPage() {
             <p className="text-sm text-neutral-500 py-4 text-center">No active cron jobs</p>
           ) : (
             <div className="space-y-2">
-              {activeCrons.slice(0, 6).map((job) => (
+              {activeCrons.slice(0, 20).map((job) => (
                 <div key={job.id} className="flex items-center justify-between rounded-md border border-neutral-100 px-3 py-2 dark:border-neutral-800">
                   <div className="min-w-0">
                     <p className="text-sm font-medium truncate">{job.name}</p>
@@ -438,7 +447,7 @@ export default function DashboardPage() {
                   <div className="ml-2 flex flex-col items-end gap-1 shrink-0">
                     <StatusBadge status={job.last_status} />
                     <p className="text-xs text-neutral-500">
-                      {job.next_run ? `Next: ${new Date(job.next_run).toLocaleTimeString()}` : "—"}
+                      {job.next_run ? `Next: ${new Date(job.next_run).toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta" })}` : "—"}
                     </p>
                   </div>
                 </div>
@@ -448,11 +457,11 @@ export default function DashboardPage() {
         </CardContent>
       </Card>
 
-      {/* Skills & Plugins */}
+      {/* Skills */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-sm font-medium">Skills & Plugins</CardTitle>
+            <CardTitle className="text-sm font-medium">Skills</CardTitle>
             <span className="text-xs text-neutral-400">
               {loading ? "—" : `${(data?.skills ?? []).length} installed`}
             </span>
@@ -466,18 +475,71 @@ export default function DashboardPage() {
           ) : (data?.skills ?? []).length === 0 ? (
             <p className="text-sm text-neutral-500">No skills found</p>
           ) : (
-            <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
               {(data?.skills ?? []).map((s) => (
-                <Badge
-                  key={`${s.source}-${s.name}`}
-                  variant="secondary"
-                  className="text-xs"
-                >
+                <Badge key={`skill-${s.name}`} variant="secondary" className="text-xs">
                   {s.name}
-                  {s.source === "openclaw" && (
-                    <span className="ml-1 opacity-60">OC</span>
-                  )}
                 </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Plugins */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-medium">Plugins</CardTitle>
+            <span className="text-xs text-neutral-400">
+              {loading ? "—" : `${(data?.plugins ?? []).length} installed`}
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center py-4">
+              <RefreshCw className="h-5 w-5 animate-spin text-neutral-400" />
+            </div>
+          ) : (data?.plugins ?? []).length === 0 ? (
+            <p className="text-sm text-neutral-500">No plugins installed</p>
+          ) : (
+            <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+              {(data?.plugins ?? []).map((p) => (
+                <Badge key={`plugin-${p.name}`} variant="outline" className="text-xs">
+                  {p.name}
+                </Badge>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* MCP Servers */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-medium">MCP Servers</CardTitle>
+            <span className="text-xs text-neutral-400">
+              {mcpServers.length} configured
+            </span>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {mcpServers.length === 0 ? (
+            <p className="text-sm text-neutral-500">No MCP servers configured</p>
+          ) : (
+            <div className="space-y-2">
+              {mcpServers.map((srv) => (
+                <div key={srv.name} className="flex items-center justify-between rounded-md border border-neutral-100 dark:border-neutral-800 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{srv.name}</p>
+                    <p className="text-xs text-neutral-400">{srv.transport}</p>
+                  </div>
+                  <Badge className={`shrink-0 text-xs ${srv.status === "running" ? "bg-green-500/10 text-green-500" : "bg-yellow-500/10 text-yellow-500"}`}>
+                    {srv.status}
+                  </Badge>
+                </div>
               ))}
             </div>
           )}
@@ -575,7 +637,7 @@ export default function DashboardPage() {
                     {log.response ?? log.message ?? ""}
                   </p>
                   <p className="shrink-0 text-xs text-neutral-400">
-                    {log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : "—"}
+                    {log.timestamp ? new Date(log.timestamp).toLocaleTimeString("id-ID", { timeZone: "Asia/Jakarta" }) : "—"}
                   </p>
                 </div>
               ))}

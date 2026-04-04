@@ -13,7 +13,7 @@ interface HermesData {
   model: string
   provider: string
   toolsets: string[]
-  skills: { name: string; source: string }[]
+  skills: { name: string; type: "skill" | "plugin" }[]
   cron_jobs: CronJob[]
   heartbeat: Record<string, unknown> | null
   now: string
@@ -93,27 +93,28 @@ async function getHermesData(): Promise<HermesData> {
       }
     })(),
 
-    // Skills from hermes and openclaw
+    // Skills and Plugins from hermes
     (async () => {
       try {
         const hermesHome = process.env.HERMES_HOME ?? "/root/.hermes"
-        const openclawSkillsPath = "/root/.openclaw/workspace/skills"
+        const skillsDir = join(hermesHome, "skills")
+        const pluginsDir = join(hermesHome, "plugins")
 
-        const hermesSkills = existsSync(join(hermesHome, "skills"))
-          ? (await readdir(join(hermesHome, "skills")))
+        const skills = existsSync(skillsDir)
+          ? (await readdir(skillsDir))
               .filter((n) => !n.startsWith("."))
-              .map((n) => ({ name: n, source: "hermes" as const }))
+              .map((n) => ({ name: n, type: "skill" as const }))
           : []
 
-        const openclawSkills = existsSync(openclawSkillsPath)
-          ? (await readdir(openclawSkillsPath))
+        const plugins = existsSync(pluginsDir)
+          ? (await readdir(pluginsDir))
               .filter((n) => !n.startsWith("."))
-              .map((n) => ({ name: n, source: "openclaw" as const }))
+              .map((n) => ({ name: n, type: "plugin" as const }))
           : []
 
-        return [...hermesSkills, ...openclawSkills]
+        return { skills, plugins }
       } catch {
-        return []
+        return { skills: [], plugins: [] }
       }
     })(),
 
@@ -131,7 +132,7 @@ async function getHermesData(): Promise<HermesData> {
   const uptimeResult = systemUptime.status === "fulfilled" ? systemUptime.value : { seconds: 0, formatted: "—" }
   const configResult = hermesConfig.status === "fulfilled" ? hermesConfig.value : null
   const cronResult = cronJobs.status === "fulfilled" ? cronJobs.value : []
-  const skillsResult = skills.status === "fulfilled" ? skills.value : []
+  const skillsData = skills.status === "fulfilled" ? skills.value : { skills: [], plugins: [] }
   const heartbeatResult = heartbeat.status === "fulfilled" ? heartbeat.value : null
 
   const hermesUptimeSeconds = process.uptime()
@@ -149,7 +150,8 @@ async function getHermesData(): Promise<HermesData> {
     model: configResult?.model ?? "—",
     provider: configResult?.provider ?? "—",
     toolsets: configResult?.toolsets ?? [],
-    skills: skillsResult,
+    skills: skillsData.skills,
+    plugins: skillsData.plugins,
     cron_jobs: cronResult,
     heartbeat: heartbeatResult,
     now: new Date().toISOString(),
